@@ -1,0 +1,17 @@
+Package: brazilianbanks
+Type: Package
+Title: Data on Brazilian banks and other regulated financial institutions
+Version: 0.0.0.9000
+Author: Douglas Kiarelly Godoy de Araujo
+Maintainer: Douglas Kiarelly Godoy de Araujo <dkg.araujo@gmail.com>
+Description: A user-friendly interface to official datasets of bank-level variables
+    sourced from the Central Bank of Brazil and from banks' Pillar 3 disclosures.
+    See the website for more information, documentation, examples and the source code.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+URL: https://github.com/dkgaraujo/brazilianbanks
+BugReports: https://github.com/dkgaraujo/brazilianbanks/issues
+Imports:
+    crayon (>= 1.4.1),
+    RJSONIO (>= 1.3)
