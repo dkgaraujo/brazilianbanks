@@ -19,7 +19,7 @@ prepare_data <- function(df_list, banks_only = TRUE, verbose = TRUE) {
 
   # finally, we ensure column names are syntactically valid names in R
   df <- df %>%
-    rename_with(make.names)
+    dplyr::rename_with(make.names)
 
   if (verbose) {
     print("`prepare_data` is completed!")
@@ -30,6 +30,10 @@ prepare_data <- function(df_list, banks_only = TRUE, verbose = TRUE) {
 #' @export
 get_data <- function(yyyymm_start, yyyymm_end, verbose = TRUE) {
   # TODO: include an option to cache the data
+  # TODO: change API for a single `get_data` function, where the data source
+  #       would be specified as a parameter, eg `source = "IFdata"`, thus enabling
+  #       future data sources such as Pillar 3 information to be added without
+  #       changing the API.
   if (verbose) {
     print("Getting the dataset...")
   }

@@ -1,13 +1,14 @@
+#' @export
 download_IFdata_values <- function(yyyymm, consolidation_type = 1) {
   # TODO: create argument `firm_list` where a list of identifiers could be passed
   # to be filtered already at this stage.
 
   # Downloads files
-  df_values <- download_IFdata_date_data(yyyymm = yyyymm, consolidation_type)
+  df_values <- download_IFdata_bankdata(yyyymm = yyyymm, consolidation_type)
   df_bankinfo <- download_IFdata_bankinfo(yyyymm = yyyymm, consolidation_type)
 
   # Downloads variable names and information
-  var_codes <- download_IFdata_date_variables(yyyymm) %>%
+  var_codes <- download_IFdata_variables(yyyymm) %>%
     dplyr::rename(var_names = ni) %>%
     dplyr::mutate(var_names = gsub("\\n.*", "", var_names, fixed = FALSE)) %>%
     dplyr::mutate(var_names = ifelse(var_names == "", lid, var_names))
@@ -27,7 +28,8 @@ download_IFdata_values <- function(yyyymm, consolidation_type = 1) {
   return(df)
 }
 
-download_IFdata_date_data <- function(yyyymm, consolidation_type = 1) {
+#' @export
+download_IFdata_bankdata <- function(yyyymm, consolidation_type = 1) {
   url_files_dados <- paste0(ifdata_url_base, yyyymm, "/dados", yyyymm, "_", consolidation_type, ".json")
   json_data <- RJSONIO::fromJSON(url_files_dados)$values
   df <- json_data %>%
@@ -42,13 +44,15 @@ download_IFdata_date_data <- function(yyyymm, consolidation_type = 1) {
   return(df)
 }
 
-download_IFdata_date_variables <- function(yyyymm) {
+#' @export
+download_IFdata_variables <- function(yyyymm) {
   url_files_info <- paste0(ifdata_url_base, yyyymm, "/info", yyyymm, ".json")
   json_info <- RJSONIO::fromJSON(url_files_info)
   info_names <- do.call(rbind.data.frame, json_info)
   return(info_names)
 }
 
+#' @export
 download_IFdata_bankinfo <- function(yyyymm, consolidation_type = 1) {
   url_files_cadastro <- paste0(ifdata_url_base, yyyymm, "/cadastro", yyyymm, "_100", consolidation_type + 3, ".json")
   json_data <- RJSONIO::fromJSON(url_files_cadastro)
@@ -61,15 +65,17 @@ download_IFdata_bankinfo <- function(yyyymm, consolidation_type = 1) {
   return(df_bankinfo)
 }
 
+#' @export
 tidy_IFdata_values <- function(df_values) {
   df_values <- df_values %>%
     dplyr::select(-info_id) %>%
-    dplyr::filter(complete.cases(.)) %>%
+    dplyr::filter(stats::complete.cases(.)) %>%
     dplyr::distinct() %>%
     tidyr::pivot_wider(names_from = var_names, values_from = value)
   return(df_values)
 }
 
+#' @export
 yyyymm_to_Date <- function(yyyymm, end_of_month = TRUE) {
   newDate <- as.Date(paste0(yyyymm, "01"), format = "%Y%m%d")
   if (end_of_month)
@@ -77,6 +83,7 @@ yyyymm_to_Date <- function(yyyymm, end_of_month = TRUE) {
   return(newDate)
 }
 
+#' @export
 all_quarters_between <- function(yyyymm_start = 201703, yyyymm_end = 202106) {
   quarters <- yyyymm_start:yyyymm_end
   quarters <- quarters[substr(as.character(quarters), 5, 6) %in% c("03", "06", "09", "12")]

@@ -1,10 +1,14 @@
+utils::globalVariables(
+  c(".", "Quarter", "c0", "ni", "var_names", "lid", "c3", "info_id", "value")
+  )
+
 series_names_PT <- c(
   c1 = "Ativo total",
   c2 = "ClasCart",
   c3 = "PCEL",
-  c4 = "Captações",
+  c4 = "Captacoes",
   c5 = "PL",
-  c6 = "Lucro líquido",
+  c6 = "Lucro liquido",
   c7 = "Disponibilidades",
   c8 = "AplicInterfinLiquidez",
   c9 = "TVM e deriv",
@@ -24,37 +28,37 @@ series_names_PT <- c(
   c89 = "89-RWA Mkt Jur",
   c90 = "90-RWA Mkt Acs",
   c91 = "91-RWA Op Risk",
-  c92 = "92-Exposição alavanc.",
+  c92 = "92-Exposicao alavanc.",
   c93 = "93-CET1 ratio",
-  c94 = "94-índice Nível 1",
-  c95 = "95-Razão de alavancagem",
-  c96 = "96-índice de imob",
-  c97 = "97-índice de Basileia",
+  c94 = "94-indice Nivel 1",
+  c95 = "95-Razao de alavancagem",
+  c96 = "96-indice de imob",
+  c97 = "97-indice de Basileia",
   c98 = "98-RWA")
 
 institution_types_PT <- c(
   U = "Bancos mutiplos",
   B = "Bancos Comerciais e Bancos de Cambio",
   D = "Bancos de Desenvolvimento",
-  K = "Agências de Fomento ou de Desenvolvimento",
+  K = "Agencias de Fomento ou de Desenvolvimento",
   I = "Bancos de Investimento",
   F = "Sociedades de Credito, Financiamento e Investimento",
-  J = "Sociedades de Credito ao Microempreendedor, sociedades de crédito direto e sociedades de emprestimo entre pessoas",
+  J = "Sociedades de Credito ao Microempreendedor, sociedades de credito direto e sociedades de emprestimo entre pessoas",
   A = "Sociedades de Arrendamento Mercantil",
-  C = "Sociedades Corretoras de Títulos e Valores Mobiliarios e Cambio",
-  T = "Sociedades Distribuidoras de Títulos e Valores Mobiliarios",
-  S = "Sociedades de Crédito Imobiliário e Associações de Poupança e Emprestimo",
+  C = "Sociedades Corretoras de Titulos e Valores Mobiliarios e Cambio",
+  T = "Sociedades Distribuidoras de Titulos e Valores Mobiliarios",
+  S = "Sociedades de Credito Imobiliario e Associacoes de Poupanca e Emprestimo",
   W = "Companhias Hipotecarias",
   E = "Caixas Economicas",
   R = "Cooperativas de Credito",
   O = "Fundos de Investimento",
   L = "Banco do Brasil S.A.",
-  M = "Caixa Econômica Federal",
-  N = "Banco Nacional de Desenvolvimento Econômico e Social",
-  H = "Administradoras de Consórcio",
+  M = "Caixa Economica Federal",
+  N = "Banco Nacional de Desenvolvimento Economico e Social",
+  H = "Administradoras de Consorcio",
   P = "Grupos de Consorcio",
-  Y = "Instituições de Pagamento",
-  Z = "Empresas em Liquidação Extrajudicial"
+  Y = "Instituicoes de Pagamento",
+  Z = "Empresas em Liquidacao Extrajudicial"
 )
 
 register_colnames_PT <- c(
@@ -65,7 +69,7 @@ register_colnames_PT <- c(
   c4 = "TipoConsolidacao", # 'I' is for independent institution; 'C' is for conglomerates
   c5 = "TipoConsolidacao_extenso", # 'Independent institution' or 'Conglomerate'
   c6 = "TipoControle", # 1; 2; 3
-  c7 = "TipoControle_extenso", # "Público (1)" "Privado nacional (2)" "Estrangeiro (3)"
+  c7 = "TipoControle_extenso", # "Publico (1)" "Privado nacional (2)" "Estrangeiro (3)"
   c8 = "?", #  "8" "9" "14" "43" "194" "196" "197" "198" "199" "200"
   c9 = "?", # "102" "104" ""    "107" "103" "101" "106" "105" "100" "58"  "168"  "51"  "64"  "59"  "53"  "56"  "213" "57"  "162" "55"  "62"  "212" "216" "211" "54"  "60"  "63"  "61"  "165" "164" "52"  "166" "218"  "217" "161" "163" "214" "215" "181" "182" "183" "169"
   c10 = "UF",
@@ -84,7 +88,7 @@ register_colnames_PT <- c(
   c23 = "NomeConglFinanc",
   c24 = "?",
   c25 = "?", # 1 or ""
-  c26 = "?", # R (cooperativas), U (bancos múltiplos), F (Financeiras) J (Stone pgmtos), X (outros)
+  c26 = "?", # R (cooperativas), U (bancos multiplos), F (Financeiras) J (Stone pgmtos), X (outros)
   c27 = "AtributosCOSIF",
   c28 = "?", # BOOL
   c29 = "?",
@@ -92,28 +96,28 @@ register_colnames_PT <- c(
 )
 
 AtributosCOSIF <- c(
-  "U" = "Bancos múltiplos;",
-  "B" = "Bancos Comerciais e Bancos de Câmbio;",
+  "U" = "Bancos multiplos;",
+  "B" = "Bancos Comerciais e Bancos de Cambio;",
   "D" = "Bancos de Desenvolvimento;",
-  "K" = "Agências de Fomento ou de Desenvolvimento;",
+  "K" = "Agencias de Fomento ou de Desenvolvimento;",
   "I" = "Bancos de Investimento;",
-  "F" = "Sociedades de Crédito, Financiamento e Investimento;",
-  "J" = "Sociedades de Crédito ao Microempreendedor, sociedades de crédito direto e sociedades de empréstimo entre pessoas.",
+  "F" = "Sociedades de Credito, Financiamento e Investimento;",
+  "J" = "Sociedades de Credito ao Microempreendedor, sociedades de credito direto e sociedades de emprestimo entre pessoas.",
   "A" = "Sociedades de Arrendamento Mercantil;",
-  "C" = "Sociedades Corretoras de Títulos e Valores Mobiliários e Câmbio;",
-  "T" = "Sociedades Distribuidoras de Títulos e Valores Mobiliários;",
-  "S" = "Sociedades de Crédito Imobiliário e Associações de Poupança e Empréstimo;",
-  "W" = "Companhias Hipotecárias;",
-  "E" = "Caixas Econômicas;",
-  "R" = "Cooperativas de Crédito;",
+  "C" = "Sociedades Corretoras de Titulos e Valores Mobiliarios e Cambio;",
+  "T" = "Sociedades Distribuidoras de Titulos e Valores Mobiliarios;",
+  "S" = "Sociedades de Credito Imobiliario e Associacoes de Poupanca e Emprestimo;",
+  "W" = "Companhias Hipotecarias;",
+  "E" = "Caixas Economicas;",
+  "R" = "Cooperativas de Credito;",
   "O" = "Fundos de Investimento;",
   "L" = "Banco do Brasil S.A.;",
-  "M" = "Caixa Econômica Federal;",
-  "N" = "Banco Nacional de Desenvolvimento Econômico e Social;",
-  "H" = "Administradoras de Consórcio;",
-  "P" = "Grupos de Consórcio;",
-  "Y" = "Instituições de Pagamento;",
-  "Z" = "Empresas em Liquidação Extrajudicial."
+  "M" = "Caixa Economica Federal;",
+  "N" = "Banco Nacional de Desenvolvimento Economico e Social;",
+  "H" = "Administradoras de Consorcio;",
+  "P" = "Grupos de Consorcio;",
+  "Y" = "Instituicoes de Pagamento;",
+  "Z" = "Empresas em Liquidacao Extrajudicial."
 )
 
 ifdata_url_base <- "https://www3.bcb.gov.br/ifdata/rest/arquivos?nomeArquivo="
