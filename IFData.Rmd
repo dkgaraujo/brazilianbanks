@@ -1,0 +1,72 @@
+---
+title: "IF.Data Downloader"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Introduction
+
+This notebook has the purpose of simply downloading data from IF.Data and making it available for analyses.
+
+# Background work
+
+```{r load packages, message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(stargazer)
+library(plm)
+devtools::load_all(".")
+```
+
+# Data
+
+The first part is to get and prepare the data itself.
+
+```{r Getting the data}
+all_data <- get_data(yyyymm_start = 201703, yyyymm_end = 202106) %>%
+  prepare_data()
+
+#all_data %>% write_csv("all_data.csv")
+```
+Next, we will prepare the dataset to include and calculate variables of interest.
+
+```{r Including variables}
+
+```
+
+
+# Models
+
+```{r Models}
+models <- list()
+model_formula <- log(Loan..Lease.and.Other.Credit.Operations.by.Risk.Level) ~ Pandemic*c12 + Pandemic*log(Funding)
+
+models[[1]] <- plm(model_formula, 
+                   effect = "twoways", 
+                   data = all_data %>% 
+                     filter(complete.cases(.)) %>% 
+                     filter(
+                       Loan..Lease.and.Other.Credit.Operations.by.Risk.Level > 0 &
+                       c12 != ""
+                      ) %>% 
+                     mutate(
+                       Pandemic = Quarter > as.Date("2020-03-30")
+                     ))
+
+stargazer(models, type = "text")
+```
+
+
+```{r}
+all_data %>%
+  filter(c12 %in% c("S1", "S2")) %>% 
+  ggplot(aes(x = Quarter, y = log(`Total Assets`), group = c2, color = c12)) +
+  geom_line() +
+  geom_vline(xintercept = as.Date("2020-03-11")) +
+  theme(
+    axis.title.x = element_blank(),
+    #legend.position = "none"
+    )
+```
+
+

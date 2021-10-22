@@ -1,0 +1,13 @@
+```{r}
+devtools::load_all(".")
+library(tidyverse)
+```
+
+```{r}
+df <- download_IFdata(202003, 202103)
+```
+
+```{r}
+df %>% 
+  filter(FinInst == 10045)
+```

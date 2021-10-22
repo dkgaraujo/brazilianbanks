@@ -1,7 +1,7 @@
 #' WIP WIP WIP brazilianbanks: Data on Brazilian banks and other regulated financial institutions
 #'
 #' A user-friendly interface to official datasets of bank-level variables
-#' sourced from the Central Bank of Brazil and from banks' Pillar 3 disclosures.
+#' sourced from the Central Bank of Brazil, in particular the 'IF.data' dataset.
 #' See the website for more information, documentation, examples and the source code.
 #'
 #' @section Data sources:
