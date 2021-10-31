@@ -14,6 +14,7 @@ get_bank_stats <- function(
   yyyymm_start, yyyymm_end,
   sources = c("IF.data"),
   cache_json = TRUE,
+  banks_only = TRUE,
   verbose = TRUE) {
   # TODO: include an option to cache the data
   # TODO: change API for a single `get_data` function, where the data source
@@ -33,11 +34,10 @@ get_bank_stats <- function(
       }
       results[[as.character(qtr)]] <- download_IFdata_values(qtr, consolidation_type = 1, cache_json = cache_json)
       #results2[[as.character(qtr)]] <- download_IFdata_values(qtr, consolidation_type = 2, cache_json = cache_json)
-      #download_IFdata_values(qtr, consolidation_type = 2)
     }
   }
 
-  results <- results %>% prepare_data()
+  results <- results %>% prepare_data(banks_only = banks_only)
 
   if (verbose) {
     print("`get_data` is completed!")

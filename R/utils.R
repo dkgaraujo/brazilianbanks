@@ -1,4 +1,4 @@
-prepare_data <- function(df_list, banks_only = TRUE, verbose = TRUE) {
+prepare_data <- function(df_list, banks_only, verbose = TRUE) {
   if (verbose) {
     print("Preparing the dataset...")
   }
