@@ -1,34 +1,20 @@
+#' Retrieves bank-level statistics.
+#'
+#' @param yyyymm_start Start quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
+#' @param yyyymm_end End quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
+#' @param sources Which data sources of bank-level data to download. Currently only "IF.data", the bank-level dtaset made publicly available by the Central Bank of Brazil is available.
+#' @param verbose Whether the function must inform the user as it progresses.
+#' @return A `tibble` with the bank-level time series in a tidy format.
+#' @examples
+#' \dontrun{
+#' get_bank_stats(yyyymm_start = 202103, yyyymm_end = 202106, sources = "IF.data", verbose = FALSE)
+#' }
 #' @export
-prepare_data <- function(df_list, banks_only = TRUE, verbose = TRUE) {
-  if (verbose) {
-    print("Preparing the dataset...")
-  }
-
-  # first step is to stack the information from the various dates
-  columns <- lapply(df_list, colnames)
-  common_cols <- Reduce(intersect, columns)
-  df <- df_list %>%
-    lapply(function(x) x[, common_cols]) %>%
-    Reduce(rbind, .)
-
-  # now we filter
-  if (banks_only) {
-    df <- df %>%
-      dplyr::filter(c3 %in% c("b1", "b2"))
-  }
-
-  # finally, we ensure column names are syntactically valid names in R
-  df <- df %>%
-    dplyr::rename_with(make.names)
-
-  if (verbose) {
-    print("`prepare_data` is completed!")
-  }
-  return(df)
-}
-
-#' @export
-get_data <- function(yyyymm_start, yyyymm_end, verbose = TRUE) {
+get_bank_stats <- function(
+  yyyymm_start, yyyymm_end,
+  sources = c("IF.data"),
+  cache_json = TRUE,
+  verbose = TRUE) {
   # TODO: include an option to cache the data
   # TODO: change API for a single `get_data` function, where the data source
   #       would be specified as a parameter, eg `source = "IFdata"`, thus enabling
@@ -37,15 +23,22 @@ get_data <- function(yyyymm_start, yyyymm_end, verbose = TRUE) {
   if (verbose) {
     print("Getting the dataset...")
   }
-  quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
-  results <- list()
-  for (qtr in quarters) {
-    if (verbose) {
-      print(paste("Getting results for", qtr))
+
+  if ("IF.data" %in% sources) {
+    quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
+    results <- list()
+    for (qtr in quarters) {
+      if (verbose) {
+        print(paste("Getting results for", qtr))
+      }
+      results[[as.character(qtr)]] <- download_IFdata_values(qtr, consolidation_type = 1, cache_json = cache_json)
+      #results2[[as.character(qtr)]] <- download_IFdata_values(qtr, consolidation_type = 2, cache_json = cache_json)
+      #download_IFdata_values(qtr, consolidation_type = 2)
     }
-    results[[as.character(qtr)]] <- download_IFdata_values(qtr, consolidation_type = 1)
-    #download_IFdata_values(qtr, consolidation_type = 2)
   }
+
+  results <- results %>% prepare_data()
+
   if (verbose) {
     print("`get_data` is completed!")
   }

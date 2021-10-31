@@ -1,81 +1,31 @@
-#' @export
-download_IFdata_values <- function(yyyymm, consolidation_type = 1) {
-  # TODO: create argument `firm_list` where a list of identifiers could be passed
-  # to be filtered already at this stage.
+prepare_data <- function(df_list, banks_only = TRUE, verbose = TRUE) {
+  if (verbose) {
+    print("Preparing the dataset...")
+  }
 
-  # Downloads files
-  df_values <- download_IFdata_bankdata(yyyymm = yyyymm, consolidation_type)
-  df_bankinfo <- download_IFdata_bankinfo(yyyymm = yyyymm, consolidation_type)
+  # first step is to stack the information from the various dates
+  columns <- lapply(df_list, colnames)
+  common_cols <- Reduce(intersect, columns)
+  df <- df_list %>%
+    lapply(function(x) x[, common_cols]) %>%
+    Reduce(rbind, .)
 
-  # Downloads variable names and information
-  var_codes <- download_IFdata_variables(yyyymm) %>%
-    dplyr::rename(var_names = ni) %>%
-    dplyr::mutate(var_names = gsub("\\n.*", "", var_names, fixed = FALSE)) %>%
-    dplyr::mutate(var_names = ifelse(var_names == "", lid, var_names))
+  # now we filter
+  if (banks_only) {
+    df <- df %>%
+      dplyr::filter(c3 %in% c("b1", "b2"))
+  }
 
-  # Prepare datasets
-  df_values <- df_values %>%
-    dplyr::mutate(Quarter = yyyymm_to_Date(yyyymm)) %>%
-    dplyr::left_join(
-      var_codes %>% dplyr::select(lid, var_names),
-      by = c("info_id" = "lid")
-      ) %>%
-    tidy_IFdata_values()
-
-  # Merge datasets
-  df <- df_values %>%
-    dplyr::inner_join(df_bankinfo, by = c("FinInst" = "c0", "Quarter" = "Quarter"))
-  return(df)
-}
-
-#' @export
-download_IFdata_bankdata <- function(yyyymm, consolidation_type = 1) {
-  url_files_dados <- paste0(ifdata_url_base, yyyymm, "/dados", yyyymm, "_", consolidation_type, ".json")
-  json_data <- RJSONIO::fromJSON(url_files_dados)$values
-  df <- json_data %>%
-    lapply(function(x) {
-      df <- do.call(rbind.data.frame, x$v)
-      colnames(df) <- c("info_id", "value")
-      return(df)
-    })
-  names(df) <- Reduce(c, lapply(json_data, function(x) x$e))
+  # finally, we ensure column names are syntactically valid names in R
   df <- df %>%
-    dplyr::bind_rows(.id = "FinInst")
+    dplyr::rename_with(make.names)
+
+  if (verbose) {
+    print("`prepare_data` is completed!")
+  }
   return(df)
 }
 
-#' @export
-download_IFdata_variables <- function(yyyymm) {
-  url_files_info <- paste0(ifdata_url_base, yyyymm, "/info", yyyymm, ".json")
-  json_info <- RJSONIO::fromJSON(url_files_info)
-  info_names <- do.call(rbind.data.frame, json_info)
-  return(info_names)
-}
-
-#' @export
-download_IFdata_bankinfo <- function(yyyymm, consolidation_type = 1) {
-  url_files_cadastro <- paste0(ifdata_url_base, yyyymm, "/cadastro", yyyymm, "_100", consolidation_type + 3, ".json")
-  json_data <- RJSONIO::fromJSON(url_files_cadastro)
-  df_bankinfo <- json_data %>%
-    lapply(function(x) x %>% as.list() %>% data.frame()) %>%
-    Reduce(rbind, .) %>%
-    dplyr::mutate(Quarter = yyyymm_to_Date(yyyymm)) %>%
-    dplyr::relocate(Quarter, .after = c0)
-
-  return(df_bankinfo)
-}
-
-#' @export
-tidy_IFdata_values <- function(df_values) {
-  df_values <- df_values %>%
-    dplyr::select(-info_id) %>%
-    dplyr::filter(stats::complete.cases(.)) %>%
-    dplyr::distinct() %>%
-    tidyr::pivot_wider(names_from = var_names, values_from = value)
-  return(df_values)
-}
-
-#' @export
 yyyymm_to_Date <- function(yyyymm, end_of_month = TRUE) {
   newDate <- as.Date(paste0(yyyymm, "01"), format = "%Y%m%d")
   if (end_of_month)
@@ -83,9 +33,32 @@ yyyymm_to_Date <- function(yyyymm, end_of_month = TRUE) {
   return(newDate)
 }
 
-#' @export
 all_quarters_between <- function(yyyymm_start = 201703, yyyymm_end = 202106) {
   quarters <- yyyymm_start:yyyymm_end
   quarters <- quarters[substr(as.character(quarters), 5, 6) %in% c("03", "06", "09", "12")]
   return(quarters)
+}
+
+find_json <- function(yyyymm, file_name, cache_folder_name = "cache_json") {
+  cached_file_name <- file.path(cache_folder_name, file_name)
+  if (file.exists(cached_file_name)) {
+    json_path <- cached_file_name
+  } else {
+    json_url <- paste0(ifdata_url_base, yyyymm, "/", file_name)
+    if (cache_json) {
+      if (!dir.exists(cache_folder_name)) {
+        dir.create(cache_folder_name)
+      }
+      try(
+        download.file(json_url, cached_file_name)
+      )
+      if (file.exists(cached_file_name)) {
+        json_path <- cached_file_name
+      }
+
+    } else {
+      json_path <- json_url
+    }
+  }
+  return(json_path)
 }

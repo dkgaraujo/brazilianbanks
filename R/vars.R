@@ -1,5 +1,5 @@
 utils::globalVariables(
-  c(".", "Quarter", "c0", "ni", "var_names", "lid", "c3", "info_id", "value")
+  c(".", "Quarter", "c0", "ni", "var_names", "lid", "c3", "info_id", "value", "where")
   )
 
 series_names_PT <- c(
