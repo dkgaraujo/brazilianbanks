@@ -16,7 +16,7 @@ download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
       var_codes %>%
         dplyr::filter(Quarter == yyyymm) %>%
         dplyr::select(lid, var_names) %>%
-        distinct(),
+        dplyr::distinct(),
       by = c("info_id" = "lid")
     ) %>%
     tidy_IFdata_values()
@@ -95,9 +95,9 @@ prepares_var_names <- function(yyyymm_start, yyyymm_end) {
   df_reports <- download_IFdata_reports(yyyymm_start) %>%
     lapply(function(x) reads_reports_json(x)) %>%
     dplyr::bind_rows() %>%
-    left_join(variables, by = c("ifd" = "id", "Quarter" = "Quarter")) %>%
-    select(-c(a, d, td, ty)) %>%
-    mutate(var_names = paste(ni, var_names, sep = "_"))
+    dplyr::left_join(variables, by = c("ifd" = "id", "Quarter" = "Quarter")) %>%
+    dplyr::select(-c(a, d, td, ty)) %>%
+    dplyr::mutate(var_names = paste(ni, var_names, sep = "_"))
 
   return(df_reports)
 }
@@ -123,7 +123,7 @@ download_IFdata_reports <- function(yyyymm_start) {
 reads_reports_json <- function(df_reports_element) {
 
   files_subelement <- df_reports_element$files %>%
-    bind_rows() %>%
+    dplyr::bind_rows() %>%
     tidyr::separate(col = f, into = c("Quarter", "report"), sep = "/") %>%
     dplyr::select(-sel) %>%
     dplyr::filter(grepl("trel", report)) %>%
@@ -144,8 +144,8 @@ reads_reports_json <- function(df_reports_element) {
       #ci = sapply(ci, "[", 1),
       ifd = sapply(ifd, "[", 1)
       ) %>%
-    unnest(c) %>%
-    mutate(c = sapply(c, "[[", 3))
+    tidyr::unnest(c) %>%
+    dplyr::mutate(c = sapply(c, "[[", 3))
 
   return(files_subelement)
 }
