@@ -1,13 +1,111 @@
 ```{r}
 devtools::load_all(".")
-library(tidyverse)
 ```
 
 ```{r}
-df <- download_IFdata(202003, 202103)
+bank_df <- get_bank_stats(202103, 202103)
 ```
 
+Below is WIP! Trying to create a simple lag function, which would then enable me to create a growth function.
 ```{r}
-df %>% 
-  filter(FinInst == 10045)
+bank_df %>% 
+  dplyr::group_by(FinInst) %>% 
+  dplyr::mutate(lag_Regulatory.Capital.Ratio. = dplyr::lag(Regulatory.Capital.Ratio., order_by = Quarter)) %>% 
+  dplyr::select(FinInst, c2, Quarter, Regulatory.Capital.Ratio., lag_Regulatory.Capital.Ratio.) %>% 
+  dplyr::filter(c2 == "BRADESCO - PRUDENCIAL")
+
+bank_df %>% 
+  dplyr::filter(Quarter %in% as.Date(c("2019-12-31", "2020-12-31"))) %>% 
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = Regulatory.Capital.Ratio.,
+      y = log(Loan..Lease.and.Other.Credit.Operations.by.Risk.Level),
+      color = factor(Quarter)
+      )
+    ) + 
+  ggplot2::scale_fill_manual(values = c("red", "blue")) +
+  ggplot2::xlim(NA, 1) +
+  ggplot2::geom_point() +
+  ggplot2::geom_smooth(method = "lm", fill = NA)
+ 
+bank_df %>% 
+  dplyr::group_by(FinInst) %>% 
+  dplyr::mutate(dplyr::across(tidyselect::where(is.numeric)), dplyr::lag(order_by = Quarter))
+
 ```
+
+# Graphs
+
+
+```{r loans in log BRL}
+gg <- bank_df %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  #dplyr::filter(Total.Assets > quantile(Total.Assets, 0.75)) %>% 
+  dplyr::filter(c12 %in% c("S1", "S2")) %>% 
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = Quarter,
+      y = log(Loan..Lease.and.Other.Credit.Operations.by.Risk.Level),
+      color = c2
+    )
+  ) +
+  ggplot2::geom_line() +
+  ggplot2::geom_vline(xintercept = as.numeric(as.Date("2020-03-10"))) +
+  labs(title = "Loans",
+       x = element_blank(),
+       y = "log BRL")
+
+plotly::ggplotly(gg)
+```
+
+```{r loans as % of assets}
+gg <- bank_df %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  #dplyr::filter(Total.Assets > quantile(Total.Assets, 0.75)) %>% 
+  dplyr::filter(c12 %in% c("S1", "S2")) %>% 
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = Quarter,
+      y = 100 * Loan..Lease.and.Other.Credit.Operations.by.Risk.Level / Total.Assets,
+      color = c2
+    )
+  ) +
+  ggplot2::geom_line() +
+  ggplot2::geom_vline(xintercept = as.numeric(as.Date("2020-03-10"))) +
+  labs(title = "Loans (% of total assets)",
+       x = element_blank(),
+       y = "%")
+
+plotly::ggplotly(gg)
+```
+
+
+```{r provisions as % of loans}
+gg <- bank_df %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  #dplyr::filter(Total.Assets > quantile(Total.Assets, 0.75)) %>% 
+  dplyr::filter(c12 %in% c("S1", "S2")) %>% 
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = Quarter,
+      y = 100 * (-Loan.Loss.Allowance.) / (Loan..Lease.and.Other.Credit.Operations.by.Risk.Level),
+      color = c2
+    )
+  ) +
+  ggplot2::geom_line() +
+  ggplot2::geom_vline(xintercept = as.numeric(as.Date("2020-03-10"))) +
+  labs(title = "Loan loss provisions (% of loans)",
+       x = element_blank(),
+       y = "%")
+
+plotly::ggplotly(gg)
+```
+
+# Pillar 3
+
+```{r}
+p3_urls <- download_Pillar3_urls()
+
+```
+
+02332886000104

@@ -8,6 +8,8 @@ get_bank_stats(
   yyyymm_start,
   yyyymm_end,
   sources = c("IF.data"),
+  cache_json = TRUE,
+  banks_only = TRUE,
   verbose = TRUE
 )
 }
@@ -17,6 +19,10 @@ get_bank_stats(
 \item{yyyymm_end}{End quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.}
 
 \item{sources}{Which data sources of bank-level data to download. Currently only "IF.data", the bank-level dtaset made publicly available by the Central Bank of Brazil is available.}
+
+\item{cache_json}{TRUE. Whether the JSON files with the raw data should be cached locally.}
+
+\item{banks_only}{TRUE. Whether only the observations related to banks should be kept.}
 
 \item{verbose}{Whether the function must inform the user as it progresses.}
 }
