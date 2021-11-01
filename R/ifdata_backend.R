@@ -95,7 +95,7 @@ prepares_var_names <- function(yyyymm_start, yyyymm_end) {
   df_reports <- download_IFdata_reports(yyyymm_start) %>%
     lapply(function(x) reads_reports_json(x)) %>%
     dplyr::bind_rows() %>%
-    dplyr::left_join(variables, by = c("ifd" = "id", "Quarter" = "Quarter")) %>%
+    dplyr::left_join(variables, by = c("c" = "id", "Quarter" = "Quarter")) %>%
     dplyr::select(-c(a, d, td, ty)) %>%
     dplyr::mutate(var_names = paste(ni, var_names, sep = "_"))
 

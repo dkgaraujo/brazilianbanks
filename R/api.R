@@ -18,11 +18,7 @@ get_bank_stats <- function(
   cache_json = TRUE,
   banks_only = TRUE,
   verbose = TRUE) {
-  # TODO: include an option to cache the data
-  # TODO: change API for a single `get_data` function, where the data source
-  #       would be specified as a parameter, eg `source = "IFdata"`, thus enabling
-  #       future data sources such as Pillar 3 information to be added without
-  #       changing the API.
+
   if (verbose) {
     print("Getting the dataset...")
   }

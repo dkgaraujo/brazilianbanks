@@ -1,5 +1,12 @@
 utils::globalVariables(
-  c(".", "Quarter", "c0", "ni", "var_names", "lid", "c3", "info_id", "value", "where")
+  c(
+    ".", "Quarter", "c0", "ni",
+    "var_names", "lid", "c3",
+    "info_id", "value", "where",
+    "var_codes", "a", "d", "td",
+    "ty", "f", "sel", "report",
+    "trel", "name_trel", "ifd"
+    )
   )
 
 series_names_PT <- c(
@@ -70,8 +77,8 @@ register_colnames_PT <- c(
   c5 = "TipoConsolidacao_extenso", # 'Independent institution' or 'Conglomerate'
   c6 = "TipoControle", # 1; 2; 3
   c7 = "TipoControle_extenso", # "Publico (1)" "Privado nacional (2)" "Estrangeiro (3)"
-  c8 = "?", #  "8" "9" "14" "43" "194" "196" "197" "198" "199" "200"
-  c9 = "?", # "102" "104" ""    "107" "103" "101" "106" "105" "100" "58"  "168"  "51"  "64"  "59"  "53"  "56"  "213" "57"  "162" "55"  "62"  "212" "216" "211" "54"  "60"  "63"  "61"  "165" "164" "52"  "166" "218"  "217" "161" "163" "214" "215" "181" "182" "183" "169"
+  c8 = "c8", #  "8" "9" "14" "43" "194" "196" "197" "198" "199" "200"
+  c9 = "c9", # "102" "104" ""    "107" "103" "101" "106" "105" "100" "58"  "168"  "51"  "64"  "59"  "53"  "56"  "213" "57"  "162" "55"  "62"  "212" "216" "211" "54"  "60"  "63"  "61"  "165" "164" "52"  "166" "218"  "217" "161" "163" "214" "215" "181" "182" "183" "169"
   c10 = "UF",
   c11 = "Cidade",
   c12 = "SegmentoPrudencial", # "S1" "S2" "S3" "S4" "S5" ""
@@ -80,19 +87,19 @@ register_colnames_PT <- c(
   c15 = "Conglomerado Prudential?",
   c16 = "NumeroAgencias",
   c17 = "NumerosPostosAtendimento",
-  c18 = "?",
+  c18 = "c18",
   c19 = "RegimeCapital", # "RPC", "RPSd"
   c20 = "UltimaMudancaSegmentacao",
-  c21 = "?",
+  c21 = "c21",
   c22 = "NomeConglPrudencial",
   c23 = "NomeConglFinanc",
-  c24 = "?",
-  c25 = "?", # 1 or ""
-  c26 = "?", # R (cooperativas), U (bancos multiplos), F (Financeiras) J (Stone pgmtos), X (outros)
+  c24 = "c24",
+  c25 = "c25", # 1 or ""
+  c26 = "c26", # R (cooperativas), U (bancos multiplos), F (Financeiras) J (Stone pgmtos), X (outros)
   c27 = "AtributosCOSIF",
-  c28 = "?", # BOOL
-  c29 = "?",
-  c30 = "?" # 0, 1, 2
+  c28 = "c28", # BOOL
+  c29 = "c29",
+  c30 = "c30" # 0, 1, 2
 )
 
 AtributosCOSIF <- c(

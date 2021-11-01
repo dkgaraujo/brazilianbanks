@@ -20,6 +20,10 @@ get_bank_stats(
 
 \item{sources}{Which data sources of bank-level data to download. Currently only "IF.data", the bank-level dtaset made publicly available by the Central Bank of Brazil is available.}
 
+\item{cache_json}{TRUE. Whether the JSON files with the raw data should be cached locally.}
+
+\item{banks_only}{TRUE. Whether only the observations related to banks should be kept.}
+
 \item{verbose}{Whether the function must inform the user as it progresses.}
 }
 \value{

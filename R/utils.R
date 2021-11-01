@@ -54,7 +54,7 @@ find_json <- function(yyyymm, file_name, cache_folder_name = "cache_json") {
         dir.create(cache_folder_name)
       }
       try(
-        download.file(json_url, cached_file_name)
+        utils::download.file(json_url, cached_file_name)
       )
       if (file.exists(cached_file_name) & file.size(cached_file_name) > 1000) {
         json_path <- cached_file_name
