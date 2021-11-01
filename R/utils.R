@@ -41,10 +41,14 @@ all_quarters_between <- function(yyyymm_start = 201703, yyyymm_end = 202106) {
 
 find_json <- function(yyyymm, file_name, cache_folder_name = "cache_json") {
   cached_file_name <- file.path(cache_folder_name, file_name)
-  if (file.exists(cached_file_name)) {
+  if (file.exists(cached_file_name) & file.size(cached_file_name) > 1000) {
     json_path <- cached_file_name
   } else {
-    json_url <- paste0(ifdata_url_base, yyyymm, "/", file_name)
+    if (is.null(yyyymm) & file_name == "relatorios") {
+      json_url <- "https://www3.bcb.gov.br/ifdata/rest/relatorios"
+    } else {
+      json_url <- paste0(ifdata_url_base, yyyymm, "/", file_name)
+    }
     if (cache_json) {
       if (!dir.exists(cache_folder_name)) {
         dir.create(cache_folder_name)
@@ -52,10 +56,9 @@ find_json <- function(yyyymm, file_name, cache_folder_name = "cache_json") {
       try(
         download.file(json_url, cached_file_name)
       )
-      if (file.exists(cached_file_name)) {
+      if (file.exists(cached_file_name) & file.size(cached_file_name) > 1000) {
         json_path <- cached_file_name
       }
-
     } else {
       json_path <- json_url
     }

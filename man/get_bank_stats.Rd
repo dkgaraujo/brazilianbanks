@@ -8,6 +8,8 @@ get_bank_stats(
   yyyymm_start,
   yyyymm_end,
   sources = c("IF.data"),
+  cache_json = TRUE,
+  banks_only = TRUE,
   verbose = TRUE
 )
 }
