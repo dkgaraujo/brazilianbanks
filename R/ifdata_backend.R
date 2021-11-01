@@ -1,3 +1,8 @@
+
+# fetching and preparing the data -----------------------------------------
+
+
+
 download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
 
   # Downloads files
@@ -149,3 +154,65 @@ reads_reports_json <- function(df_reports_element) {
 
   return(files_subelement)
 }
+
+
+# calculations on the variables -------------------------------------------
+
+lag_numericvars <- function(df) {
+  df <- df %>%
+    group_by(FinInst) %>%
+    dplyr::mutate(
+      dplyr::across(
+        is.numeric,
+        .fns = list(lag_var = ~ dplyr::lag(.x, order_by = Quarter)),
+        .names = "lag_{col}"
+      )
+    )
+  return(df)
+}
+
+# growthrate <- function(df) {
+#   df <- df %>%
+#     group_by(FinInst) %>%
+#     dplyr::mutate(
+#       dplyr::across(
+#         is.numeric,
+#         .fns = list(lag_var = ~ dplyr::lag(.x, order_by = Quarter)),
+#         .names = "QoQ_growth_rate_{col}"
+#       )
+#     )
+#   return(df)
+# }
+
+loans_share_by_risk_level <- function(df) {
+  total_var <- "Loans.Portfolio.by.risk.level_Grand.Total"
+  df <- df %>%
+    dplyr::mutate(
+      loan_share_risk_AA = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_AA / .data[[total_var]], NA),
+      loan_share_risk_A = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_A / .data[[total_var]], NA),
+      loan_share_risk_B = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_B / .data[[total_var]], NA),
+      loan_share_risk_C = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_C / .data[[total_var]], NA),
+      loan_share_risk_D = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_D / .data[[total_var]], NA),
+      loan_share_risk_E = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_E / .data[[total_var]], NA),
+      loan_share_risk_F = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_F / .data[[total_var]], NA),
+      loan_share_risk_G = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_G / .data[[total_var]], NA),
+      loan_share_risk_H = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_H / .data[[total_var]], NA)
+    )
+  return(df)
+}
+
+loans_share_by_geographical_region <- function(df) {
+  total_var <- "Loans.Portfolio.by.geographical.region_Grand.Total"
+  df <- df %>%
+    dplyr::mutate(
+      loan_share_geo_North = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_North / .data[[total_var]], NA),
+      loan_share_geo_Northeast = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_Northeast / .data[[total_var]], NA),
+      loan_share_risk_geo_CenterWest = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_Center.west / .data[[total_var]], NA),
+      loan_share_risk_geo_Southeast = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_Southest / .data[[total_var]], NA),
+      loan_share_risk_geo_South = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_South / .data[[total_var]], NA),
+      loan_share_risk_geo_overseas = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_Overseas.Loans.Total / .data[[total_var]], NA),
+      loan_share_risk_geo_notinformed = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_Local.not.Informed / .data[[total_var]], NA)
+    )
+  return(df)
+}
+

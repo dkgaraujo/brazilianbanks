@@ -1,7 +1,7 @@
 #' Retrieves bank-level statistics.
 #'
-#' @param yyyymm_start Start quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
-#' @param yyyymm_end End quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
+#' @param yyyymm_start Start calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
+#' @param yyyymm_end End calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
 #' @param sources Which data sources of bank-level data to download. Currently only "IF.data", the bank-level dtaset made publicly available by the Central Bank of Brazil is available.
 #' @param cache_json TRUE. Whether the JSON files with the raw data should be cached locally.
 #' @param banks_only TRUE. Whether only the observations related to banks should be kept.
@@ -9,7 +9,7 @@
 #' @return A `tibble` with the bank-level time series in a tidy format.
 #' @examples
 #' \dontrun{
-#' get_bank_stats(yyyymm_start = 202103, yyyymm_end = 202106, sources = "IF.data", verbose = FALSE)
+#' get_bank_stats(yyyymm_start = 202003, yyyymm_end = 202106, sources = "IF.data", verbose = FALSE)
 #' }
 #' @export
 get_bank_stats <- function(

@@ -3,3 +3,5 @@
 misc
 nbs
 cache_json
+.github
+R/pillar3_backend.R
