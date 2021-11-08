@@ -13,7 +13,7 @@ prepare_data <- function(df_list, banks_only, verbose = TRUE) {
   # now we filter
   if (banks_only) {
     df <- df %>%
-      dplyr::filter(c3 %in% c("b1", "b2"))
+      dplyr::filter(Institution.Type %in% c("b1", "b2"))
   }
 
   # finally, we ensure column names are syntactically valid names in R

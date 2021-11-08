@@ -27,9 +27,17 @@ download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
     tidy_IFdata_values()
 
   # Merge datasets
-  df <- df_values %>%
-    dplyr::inner_join(df_bankinfo, by = c("FinInst" = "c0", "Quarter" = "Quarter"))
-  return(df)
+  df_values <- df_values %>%
+    dplyr::inner_join(df_bankinfo, by = c("FinInst" = "c0", "Quarter" = "Quarter")) %>%
+    dplyr::rename(Name = c2) %>%
+    dplyr::rename(Institution.Type = c3) %>%
+    dplyr::rename(Control.Type = c6) %>%
+    dplyr::rename(Control.Type.Name = c7) %>%
+    dplyr::rename(BR.State = c10) %>%
+    dplyr::rename(BR.City = c11) %>%
+    dplyr::rename(Number.Branches = c16) %>%
+    dplyr::rename(Number.BankServiceOutposts = c17)
+  return(df_values)
 }
 
 download_IFdata_bankdata <- function(yyyymm, type, cache_json) {
@@ -158,35 +166,52 @@ reads_reports_json <- function(df_reports_element) {
 
 # calculations on the variables -------------------------------------------
 
-lag_numericvars <- function(df) {
-  df <- df %>%
-    group_by(FinInst) %>%
+#' Adds columns with (one period) lagged information for numeric columns
+#'
+#' @param dataframe A `tibble` containing the bank-level information.
+#' @return A `tibble` with the bank-level information plus the added columns.
+lag_numericvars <- function(dataframe) {
+  dataframe <- dataframe %>%
+    dplyr::group_by(FinInst) %>%
     dplyr::mutate(
       dplyr::across(
-        is.numeric,
+        tidyselect:::where(is.numeric),
         .fns = list(lag_var = ~ dplyr::lag(.x, order_by = Quarter)),
         .names = "lag_{col}"
       )
-    )
-  return(df)
+    ) %>%
+    dplyr::ungroup()
+  return(dataframe)
 }
 
-# growthrate <- function(df) {
-#   df <- df %>%
-#     group_by(FinInst) %>%
-#     dplyr::mutate(
-#       dplyr::across(
-#         is.numeric,
-#         .fns = list(lag_var = ~ dplyr::lag(.x, order_by = Quarter)),
-#         .names = "QoQ_growth_rate_{col}"
-#       )
-#     )
-#   return(df)
-# }
+#' Adds columns with quarter-on-quarter growth for numeric columns
+#'
+#' @param dataframe A `tibble` containing the bank-level information.
+#' @return A `tibble` with the bank-level information plus the added columns.
+growthrate <- function(dataframe) {
+  dataframe <- dataframe %>%
+    dplyr::group_by(FinInst) %>%
+    dplyr::mutate(
+      dplyr::across(
+        tidyselect:::where(is.numeric),
+        .fns = list(QoQ_growth = ~ ifelse(
+          is.na(dplyr::lag(.x, order_by = Quarter)) |
+            dplyr::lag(.x, order_by = Quarter) == 0,
+          NA,
+          (.x / dplyr::lag(.x, order_by = Quarter)) - 1)),
+        .names = "QoQ_growth_rate_{col}"
+      )
+    )
+  return(dataframe)
+}
 
-loans_share_by_risk_level <- function(df) {
+#' Adds columns with the loan share of each risk level
+#'
+#' @param dataframe A `tibble` containing the bank-level information.
+#' @return A `tibble` with the bank-level information plus the added columns.
+loans_share_by_risk_level <- function(dataframe) {
   total_var <- "Loans.Portfolio.by.risk.level_Grand.Total"
-  df <- df %>%
+  dataframe <- dataframe %>%
     dplyr::mutate(
       loan_share_risk_AA = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_AA / .data[[total_var]], NA),
       loan_share_risk_A = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_A / .data[[total_var]], NA),
@@ -198,12 +223,16 @@ loans_share_by_risk_level <- function(df) {
       loan_share_risk_G = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_G / .data[[total_var]], NA),
       loan_share_risk_H = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.risk.level_H / .data[[total_var]], NA)
     )
-  return(df)
+  return(dataframe)
 }
 
-loans_share_by_geographical_region <- function(df) {
+#' Adds columns with the loan share of each geographical region
+#'
+#' @param dataframe A `tibble` containing the bank-level information.
+#' @return A `tibble` with the bank-level information plus the added columns.
+loans_share_by_geographical_region <- function(dataframe) {
   total_var <- "Loans.Portfolio.by.geographical.region_Grand.Total"
-  df <- df %>%
+  dataframe <- dataframe %>%
     dplyr::mutate(
       loan_share_geo_North = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_North / .data[[total_var]], NA),
       loan_share_geo_Northeast = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_Northeast / .data[[total_var]], NA),
@@ -213,6 +242,15 @@ loans_share_by_geographical_region <- function(df) {
       loan_share_risk_geo_overseas = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_Overseas.Loans.Total / .data[[total_var]], NA),
       loan_share_risk_geo_notinformed = ifelse(.data[[total_var]] != 0, Loans.Portfolio.by.geographical.region_Local.not.Informed / .data[[total_var]], NA)
     )
-  return(df)
+  return(dataframe)
 }
 
+#' Adds a column with the stable proportionality segment
+#'
+#' @param dataframe A `tibble` containing the bank-level information.
+#' @param last_segment Boolean. If TRUE, the stable segmentation is taken from the last period. If FALSE, from the first period.
+#' @return A `tibble` with the bank-level information plus the added stable proportionality segment column.
+stable_segmentation <- function(dataframe, last_segment = TRUE) {
+  # TODO.......
+  return(dataframe)
+}

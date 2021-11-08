@@ -37,7 +37,16 @@ get_bank_stats <- function(
     }
   }
 
-  results <- results %>% prepare_data(banks_only = banks_only)
+  if (verbose) {
+    print("`get_data` is now augmenting the dataset.")
+  }
+
+  results <- results %>%
+    prepare_data(banks_only = banks_only) %>%
+    loans_share_by_risk_level() %>%
+    loans_share_by_geographical_region() %>%
+    growthrate() %>%
+    lag_numericvars()
 
   if (verbose) {
     print("`get_data` is completed!")

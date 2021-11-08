@@ -1,3 +1,4 @@
+#' @import utils
 utils::globalVariables(
   c(
     ".", "Quarter", "c0", "ni",
@@ -5,7 +6,8 @@ utils::globalVariables(
     "info_id", "value", "where",
     "var_codes", "a", "d", "td",
     "ty", "f", "sel", "report",
-    "trel", "name_trel", "ifd"
+    "trel", "name_trel", "ifd",
+    "where"
     )
   )
 

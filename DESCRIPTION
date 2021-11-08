@@ -15,11 +15,12 @@ BugReports: https://github.com/dkgaraujo/brazilianbanks/issues
 lazyData: true
 Imports:
     crayon (>= 1.4.1),
-    dplyr(>= 1.0.5),
-    lubridate(>= 1.7.10),
-    magrittr(>= 2.0.1),
+    dplyr (>= 1.0.5),
+    lubridate (>= 1.7.10),
+    magrittr (>= 2.0.1),
     RJSONIO (>= 1.3),
-    tidyr(>= 1.1.3)
+    tidyr (>= 1.1.3),
+    tidyselect
 RoxygenNote: 7.1.2
 Depends: 
     R (>= 2.10)

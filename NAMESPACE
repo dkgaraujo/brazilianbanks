@@ -2,4 +2,5 @@
 
 export("%>%")
 export(get_bank_stats)
+import(utils)
 importFrom(magrittr,"%>%")
