@@ -14,9 +14,9 @@ get_bank_stats(
 )
 }
 \arguments{
-\item{yyyymm_start}{Start quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.}
+\item{yyyymm_start}{Start calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.}
 
-\item{yyyymm_end}{End quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.}
+\item{yyyymm_end}{End calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.}
 
 \item{sources}{Which data sources of bank-level data to download. Currently only "IF.data", the bank-level dtaset made publicly available by the Central Bank of Brazil is available.}
 
@@ -34,6 +34,6 @@ Retrieves bank-level statistics.
 }
 \examples{
 \dontrun{
-get_bank_stats(yyyymm_start = 202103, yyyymm_end = 202106, sources = "IF.data", verbose = FALSE)
+get_bank_stats(yyyymm_start = 202003, yyyymm_end = 202106, sources = "IF.data", verbose = FALSE)
 }
 }
