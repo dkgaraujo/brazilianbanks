@@ -35,6 +35,7 @@ download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
     dplyr::rename(Control.Type.Name = c7) %>%
     dplyr::rename(BR.State = c10) %>%
     dplyr::rename(BR.City = c11) %>%
+    dplyr::rename(Segment = c12) %>%
     dplyr::rename(Number.Branches = c16) %>%
     dplyr::rename(Number.BankServiceOutposts = c17)
   return(df_values)
