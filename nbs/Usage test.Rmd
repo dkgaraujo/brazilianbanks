@@ -1,12 +1,33 @@
 ```{r}
 devtools::load_all(".")
+library(tidyverse)
 ```
 
 ```{r}
-bank_df <- get_bank_stats(202103, 202103)
+bank_df <- get_bank_stats(201703, 202106)
 ```
 
+# merge congl prudencial and financial
+
+```{r}
+bank_df %>% head()
+```
+
+```{r}
+bank_df %>% 
+  filter(FinInst == 1000080075) %>% 
+  select(
+    Quarter,
+    Summary_Total.Assets,
+    Agricul
+    c2
+  )
+```
+
+# Lag & growth rate
+
 Below is WIP! Trying to create a simple lag function, which would then enable me to create a growth function.
+
 ```{r}
 bank_df %>% 
   dplyr::group_by(FinInst) %>% 
@@ -35,7 +56,6 @@ bank_df %>%
 ```
 
 # Graphs
-
 
 ```{r loans in log BRL}
 gg <- bank_df %>% 
@@ -78,7 +98,6 @@ gg <- bank_df %>%
 
 plotly::ggplotly(gg)
 ```
-
 
 ```{r provisions as % of loans}
 gg <- bank_df %>% 
