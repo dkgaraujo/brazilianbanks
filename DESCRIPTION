@@ -20,9 +20,12 @@ Imports:
     magrittr (>= 2.0.1),
     RJSONIO (>= 1.3),
     tidyr (>= 1.1.3),
-    tidyselect
+    tidyselect (>= 1.1.1)
 RoxygenNote: 7.1.2
 Depends: 
     R (>= 2.10)
 Suggests: 
+    rmarkdown,
+    knitr,
     testthat
+VignetteBuilder: knitr

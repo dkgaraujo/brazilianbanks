@@ -2,9 +2,11 @@
 #'
 #' @param yyyymm_start Start calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
 #' @param yyyymm_end End calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
-#' @param sources Which data sources of bank-level data to download. Currently only "IF.data", the bank-level dtaset made publicly available by the Central Bank of Brazil is available.
-#' @param cache_json TRUE. Whether the JSON files with the raw data should be cached locally.
+#' @param sources Which data sources of bank-level data to download. Currently only "IF.data", the bank-level dataset made publicly available by the Central Bank of Brazil is available.
 #' @param banks_only TRUE. Whether only the observations related to banks should be kept.
+#' @param include_growthrate TRUE. Whether the quarter-on-quarter growth rate for the numeric variables should be calculated.
+#' @param include_lag TRUE. Whether the numeric variables should also be lagged.
+#' @param cache_json TRUE. Whether the JSON files with the raw data should be cached locally.
 #' @param verbose Whether the function must inform the user as it progresses.
 #' @return A `tibble` with the bank-level time series in a tidy format.
 #' @examples
@@ -15,8 +17,10 @@
 get_bank_stats <- function(
   yyyymm_start, yyyymm_end,
   sources = c("IF.data"),
-  cache_json = TRUE,
   banks_only = TRUE,
+  include_growthrate = TRUE,
+  include_lag = TRUE,
+  cache_json = TRUE,
   verbose = TRUE) {
 
   if (verbose) {
@@ -45,8 +49,17 @@ get_bank_stats <- function(
     prepare_data(banks_only = banks_only) %>%
     loans_share_by_risk_level() %>%
     loans_share_by_geographical_region() %>%
-    growthrate() %>%
-    lag_numericvars()
+    excess_capital(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
+
+  if (include_growthrate) {
+    results <- results %>%
+      growthrate()
+  }
+
+  if (include_lag) {
+    results <- results %>%
+      lag_numericvars()
+  }
 
   if (verbose) {
     print("`get_data` is completed!")

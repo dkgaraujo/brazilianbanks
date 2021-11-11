@@ -255,3 +255,79 @@ stable_segmentation <- function(dataframe, last_segment = TRUE) {
   # TODO.......
   return(dataframe)
 }
+
+#' Adds a column with each firm's D-SIB status (ie, whether they are one of the domestic systemically important banks) and excess capital
+#'
+#' @param dataframe A `tibble` containing the bank-level information.
+#' @return A `tibble` with the bank-level information plus the added columns.
+excess_capital <- function(dataframe, yyyymm_start, yyyymm_end) {
+  # this function transforms the reference table for capital requirements
+  # in a more appropriate lookup table for these requirements by quarter
+  min_K_req <- min_capital_requirements_quarter(
+    yyyymm_start = yyyymm_start,
+    yyyymm_end = yyyymm_end,
+    capital_requirements = capital_requirements
+  )
+
+  # OBS.: Currently, the identification of D-SIBs is explicit.
+  # Ideally it should be automatic by following the regulatory definition.
+  dataframe <- dataframe %>%
+    dplyr::mutate(
+      DSIB = ifelse(FinInst %in% c(
+        1000080075, # Bradesco
+        1000080099, # Itaú
+        1000080185, # Santander
+        1000080738, # Caixa
+        1000080329  # Banco do Brasil
+    ), 1, 0)) %>%
+    dplyr::left_join(min_K_req, by = "Quarter")
+
+  # Now the excess capital is calculated
+  dataframe <- dataframe %>%
+    dplyr::rename(
+      CET1_ratio = Capital.Information_Common.Equity.Tier.I.Ratio...k.....a.....i.,
+      Tier1_ratio = Capital.Information_Tier.I.Capital.Ratio...l.....c.....i.,
+      Total_Capital_ratio = Capital.Information_Regulatory.Capital.Ratio...m.....e.....i.
+    ) %>%
+    dplyr::mutate(
+      CET1_above_min = CET1_ratio - CET1_req,
+      Tier1_above_min = Tier1_ratio - Tier1_req,
+      TotalCap_above_min = Total_Capital_ratio - Total_Capital_req,
+      DSIB_effective_req = DSIB_req * DSIB,
+      CET1_req_buffers = CET1_req + CCoB + effectiveCCyB + DSIB_effective_req,
+      CET1_above_buffers = CET1_ratio - CET1_req_buffers
+    )
+  return(dataframe)
+}
+
+#' Returns a look-up table with the capital requirements for each quarter
+#'
+#' @inheritParams get_bank_stats
+min_capital_requirements_quarter <- function(yyyymm_start, yyyymm_end, capital_requirements) {
+  stopifnot(yyyymm_start > 201400)
+  quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end) %>%
+    yyyymm_to_Date()
+  cols_capital <- colnames(capital_requirements)[-(1:2)]
+  result <- data.frame(matrix(
+    nrow = length(quarters),
+    ncol = length(cols_capital)
+  ))
+  rownames(result) <- quarters
+  colnames(result) <- cols_capital
+  for (qtr in rownames(result)) {
+    if (qtr < as.Date("2019-01-01")) {
+      result[qtr,] <- capital_requirements %>%
+        dplyr::filter(min_date >= qtr |  max_date >= qtr) %>%
+        dplyr::filter(min_date == min(min_date)) %>%
+        dplyr::select(-tidyselect::ends_with("date")) %>%
+        as.data.frame()
+    } else {
+      result[qtr,] <- capital_requirements %>%
+        dplyr::filter(min_date == as.Date("2019-01-01")) %>%
+        dplyr::select(-tidyselect::ends_with("date")) %>%
+        as.data.frame()
+    }
+  }
+  result <- tibble::as_tibble(cbind(Quarter = as.Date(rownames(result)), result))
+  return(result)
+}
