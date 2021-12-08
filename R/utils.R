@@ -68,3 +68,26 @@ find_json <- function(yyyymm, file_name, cache_folder_name = "cache_json") {
   }
   return(json_path)
 }
+
+download_GDP_data <- function(yyyymm_start, yyyymm_end) {
+  # Get all quarters for the GDP data (which uses the YYYYQQ format),
+  # including an extra 3 quarters before yyyymm_start to enable the
+  # calculation of an annual GDP for the first quarter.
+  yyyymm_qtrs <- all_quarters_between(yyyymm_start, yyyymm_end)
+  qtrs <- yyyymm_qtrs %>%
+    c(all_quarters_between(.[1] - 100, .[1])[-1], .) %>%
+    sapply(function(x) paste(substr(x, 1, 4), as.integer(substr(x, 5, 6)) / 3, sep = "0")) %>%
+    paste(collapse = "|")
+
+  gdp <- RJSONIO::fromJSON(paste0("https://servicodados.ibge.gov.br/api/v3/agregados/1846/periodos/",qtrs ,"/variaveis/585?localidades=N1[all]&classificacao=11255[90707]"))
+  gdp <- as.integer(gdp[[1]]$resultados[[1]]$series[[1]]$serie) %>%
+    zoo::rollapply(4, sum)
+
+  # note: GDP values are in BRL millions
+  gdp <-
+    data.frame(
+      Quarter = yyyymm_qtrs %>% yyyymm_to_Date(),
+      AnnualGDP = gdp
+    )
+  return(gdp)
+}

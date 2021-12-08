@@ -51,6 +51,10 @@ get_bank_stats <- function(
     loans_share_by_geographical_region() %>%
     excess_capital(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
 
+  results <- results %>%
+    dplyr::left_join(download_GDP_data(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)) %>%
+    dplyr::mutate(SizeByGDP = Segmentation_Total.Exposure.or.Total.Assets / AnnualGDP)
+
   if (include_growthrate) {
     results <- results %>%
       growthrate()
