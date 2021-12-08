@@ -54,7 +54,7 @@ get_bank_stats <- function(
 
   results <- results %>%
     dplyr::left_join(download_GDP_data(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)) %>%
-    dplyr::mutate(SizeByGDP = Segmentation_Total.Exposure.or.Total.Assets / AnnualGDP)
+    dplyr::mutate(SizeByGDP = Segmentation_Total.Exposure.or.Total.Assets / AnnualGDP / 1000000)
 
   if (include_growthrate) {
     results <- results %>%
