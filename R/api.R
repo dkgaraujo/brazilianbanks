@@ -53,7 +53,7 @@ get_bank_stats <- function(
     excess_capital(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
 
   results <- results %>%
-    dplyr::left_join(download_GDP_data(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)) %>%
+    dplyr::left_join(download_GDP_data(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end), by = "Quarter") %>%
     dplyr::mutate(SizeByGDP = Segmentation_Total.Exposure.or.Total.Assets / AnnualGDP / 1000000)
 
   if (include_growthrate) {

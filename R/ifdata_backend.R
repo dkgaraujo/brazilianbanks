@@ -29,7 +29,7 @@ download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
   # Merge datasets
   df_values <- df_values %>%
     dplyr::inner_join(df_bankinfo, by = c("FinInst" = "c0", "Quarter" = "Quarter")) %>%
-    dplyr::rename(Name = c2) %>%
+    dplyr::rename(CompleteName = c2) %>%
     dplyr::rename(Institution.Type = c3) %>%
     dplyr::rename(Control.Type = c6) %>%
     dplyr::rename(Control.Type.Name = c7) %>%
@@ -37,7 +37,8 @@ download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
     dplyr::rename(BR.City = c11) %>%
     dplyr::rename(Segment = c12) %>%
     dplyr::rename(Number.Branches = c16) %>%
-    dplyr::rename(Number.BankServiceOutposts = c17)
+    dplyr::rename(Number.BankServiceOutposts = c17) %>%
+    dplyr::mutate(Name = stringr::str_replace(CompleteName, fixed(" - PRUDENCIAL"), ""))
   return(df_values)
 }
 
