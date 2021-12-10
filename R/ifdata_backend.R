@@ -38,7 +38,7 @@ download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
     dplyr::rename(Segment = c12) %>%
     dplyr::rename(Number.Branches = c16) %>%
     dplyr::rename(Number.BankServiceOutposts = c17) %>%
-    dplyr::mutate(Name = stringr::str_replace(CompleteName, fixed(" - PRUDENCIAL"), ""))
+    dplyr::mutate(Name = stringr::str_replace(CompleteName, stringr::fixed(" - PRUDENCIAL"), ""))
   return(df_values)
 }
 
