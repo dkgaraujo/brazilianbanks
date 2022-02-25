@@ -2,7 +2,12 @@
 # fetching and preparing the data -----------------------------------------
 
 
-
+#' Downloads and prepares (eg, renaming columns, etc) IF.Data values for a specific quarter
+#'
+#' @param yyyymm The quarter for which the data will be downloaded.
+#' @param consolidation_type One of the four consolidation types in IF.Data: 1 - Prudential conglomerates; 2 - Financial conglomerates; 3 - Financial Institutions; 4 - Foreign exchange institutions
+#' @param cache_json Boolean. Whether or not will downloaded data be cached locally.
+#' @return A `tibble` with the IF.Data values for that quarter.
 download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
 
   # Downloads files

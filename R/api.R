@@ -27,13 +27,15 @@ get_bank_stats <- function(
     print("Getting the dataset...")
   }
 
+  results <- list()
+
   if ("IF.data" %in% sources) {
     .GlobalEnv$cache_json <- cache_json
     .GlobalEnv$var_codes <- prepares_var_names(yyyymm_start, yyyymm_end)
 
     quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
 
-    results <- list()
+
     for (qtr in quarters) {
       if (verbose) {
         print(paste("Getting results for", qtr))
@@ -53,8 +55,16 @@ get_bank_stats <- function(
     excess_capital(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
 
   results <- results %>%
-    dplyr::left_join(download_GDP_data(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end), by = "Quarter") %>%
-    dplyr::mutate(SizeByGDP = Segmentation_Total.Exposure.or.Total.Assets / AnnualGDP / 1000000)
+    dplyr::left_join(download_GDP_data(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end), by = "Quarter")
+
+  if ("Segmentation_Total.Exposure.or.Total.Assets" %in% colnames(results)) {
+    results <- results %>%
+      dplyr::mutate(SizeByGDP = Segmentation_Total.Exposure.or.Total.Assets / AnnualGDP / 1000000)
+  } else {
+    results <- results %>%
+      dplyr::mutate(SizeByGDP = Summary_Total.Assets / AnnualGDP / 1000000)
+  }
+
 
   if (include_growthrate) {
     results <- results %>%
