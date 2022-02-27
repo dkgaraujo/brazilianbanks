@@ -30,7 +30,7 @@ get_bank_stats <- function(
   results <- list()
 
   if ("IF.data" %in% sources) {
-    .GlobalEnv$cache_json <- cache_json
+    #.GlobalEnv$cache_json <- cache_json
     .GlobalEnv$var_codes <- prepares_var_names(yyyymm_start, yyyymm_end)
 
     quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
@@ -40,7 +40,7 @@ get_bank_stats <- function(
       if (verbose) {
         print(paste("Getting results for", qtr))
       }
-      results[[as.character(qtr)]] <- download_IFdata_values(qtr, consolidation_type = 1)
+      results[[as.character(qtr)]] <- download_IFdata_values(qtr, consolidation_type = 1, cache_json)
     }
   }
 

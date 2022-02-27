@@ -42,7 +42,7 @@ all_quarters_between <- function(yyyymm_start = 201803, yyyymm_end = 202106) {
   return(quarters)
 }
 
-find_json <- function(yyyymm, file_name, cache_folder_name = "cache_json") {
+find_json <- function(yyyymm, file_name, cache_folder_name = "cache_json", cache_json = TRUE) {
   cached_file_name <- file.path(cache_folder_name, file_name)
   if (file.exists(cached_file_name) & file.size(cached_file_name) > 1000) {
     # the file.size() > 1000 condition is necessary because sometimes

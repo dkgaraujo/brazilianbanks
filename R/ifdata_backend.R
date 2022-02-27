@@ -11,13 +11,13 @@
 download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
 
   # Downloads files
-  df_values_1 <- download_IFdata_bankdata(yyyymm = yyyymm, 1, cache_json)
-  df_values_3 <- download_IFdata_bankdata(yyyymm = yyyymm, 3, cache_json)
-  df_values_4 <- download_IFdata_bankdata(yyyymm = yyyymm, 4, cache_json)
+  df_values_1 <- download_IFdata_bankdata(yyyymm = yyyymm, type = 1, cache_json)
+  df_values_3 <- download_IFdata_bankdata(yyyymm = yyyymm, type = 3, cache_json)
+  df_values_4 <- download_IFdata_bankdata(yyyymm = yyyymm, type = 4, cache_json)
   df_values <- rbind(df_values_1, df_values_3, df_values_4)
   rm(df_values_1, df_values_3, df_values_4)
   gc()
-  df_bankinfo <- download_IFdata_bankinfo(yyyymm = yyyymm, consolidation_type, cache_json)
+  df_bankinfo <- download_IFdata_bankinfo(yyyymm = yyyymm, consolidation_type = consolidation_type, cache_json = cache_json)
 
   # Prepare datasets
   df_values <- df_values %>%
@@ -47,12 +47,16 @@ download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
   return(df_values)
 }
 
+#' Downloads IF.Data data for a given quarter and consolidation type
+#'
+#' @inheritParams download_IFdata_values
+#' @return A data.frame with three columns: the financial institution identifier (FinInst), the variable code (info_id) and its value (value).
 download_IFdata_bankdata <- function(yyyymm, type, cache_json) {
   # Virtually all of the data are located in files with type = c(1, 3)
   # For some reason, it appears that consolidation type == 2 (financial conglomerates)
   # are represented in this file only by (consolidation) type = 3.
   file_name <- paste0("dados", yyyymm, "_", type, ".json")
-  json_path <- find_json(yyyymm, file_name)
+  json_path <- find_json(yyyymm, file_name, cache_json = cache_json)
   json_data <- RJSONIO::fromJSON(json_path)$values
 
   df <- json_data %>%
