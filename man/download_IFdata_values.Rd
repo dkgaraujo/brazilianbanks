@@ -4,7 +4,7 @@
 \alias{download_IFdata_values}
 \title{Downloads and prepares (eg, renaming columns, etc) IF.Data values for a specific quarter}
 \usage{
-download_IFdata_values(yyyymm, consolidation_type, cache_json)
+download_IFdata_values(yyyymm, consolidation_type, var_codes, cache_json)
 }
 \arguments{
 \item{yyyymm}{The quarter for which the data will be downloaded.}

@@ -42,34 +42,56 @@ all_quarters_between <- function(yyyymm_start = 201803, yyyymm_end = 202106) {
   return(quarters)
 }
 
-find_json <- function(yyyymm, file_name, cache_folder_name = "cache_json", cache_json = TRUE) {
-  cached_file_name <- file.path(cache_folder_name, file_name)
-  if (file.exists(cached_file_name) & file.size(cached_file_name) > 1000) {
+#' Formats the path to a local or remote IF.data JSON file from the respective quarter.
+#'
+#' @inheritParams download_IFdata_bankdata
+#' @param file_name The name of the JSON file (including the extension) to be retrieved locally or remotely.
+#' @param cache_folder_name The local folder where the JSON files are (to be) cached.
+#' @return The path to the JSON file saved locally (if `cache_json` is TRUE) or to its URL if FALSE.
+find_IFdata_json <- function(yyyymm = NULL, file_name, cache_folder_name = "cache_json", cache_json = TRUE) {
+  cached_file_name <- ifelse(is.null(yyyymm),
+                             file.path(cache_folder_name, stringr::str_split(file_name, "/")[[1]][2]),
+                             file.path(cache_folder_name, file_name))
+  if (cache_json & file.exists(cached_file_name) & file.size(cached_file_name) > 500) {
     # the file.size() > 1000 condition is necessary because sometimes
     # the file is wrongfully downloaded, and in these cases it is very small
     # while the correctly downloaded files are substantially bigger than this limit
     json_path <- cached_file_name
   } else {
-    if (is.null(yyyymm) & file_name == "relatorios") {
-      json_url <- "https://www3.bcb.gov.br/ifdata/rest/relatorios"
+    if (is.null(yyyymm)) {
+      if (file_name == "relatorios") {
+        json_url <- "https://www3.bcb.gov.br/ifdata/rest/relatorios"
+      } else {
+        json_url <- paste0("https://www3.bcb.gov.br/ifdata/rest/arquivos?nomeArquivo=", file_name)
+      }
     } else {
       json_url <- paste0(ifdata_url_base, yyyymm, "/", file_name)
     }
-    if (cache_json) {
-      if (!dir.exists(cache_folder_name)) {
-        dir.create(cache_folder_name)
-      }
-      try(
-        utils::download.file(json_url, cached_file_name)
-      )
-      if (file.exists(cached_file_name) & file.size(cached_file_name) > 1000) {
-        json_path <- cached_file_name
-      }
-    } else {
-      json_path <- json_url
-    }
+    json_path <- path_to_json(json_url, cache_folder_name, cached_file_name, cache_json)
   }
   return(json_path)
+}
+
+#' Retrieves the path to a JSON file in the local system or in the internet.
+#'
+#' @inheritParams find_IFdata_json
+#' @param cached_file_name The full path to the file name where the JSON file is to be saved locally.
+#' @return The path to the JSON file saved locally (if `cache_json` is TRUE) or to its URL if FALSE.
+path_to_json <- function(json_url, cache_folder_name = "cache_json", cached_file_name = NULL, cache_json) {
+  if (cache_json) {
+    if (!dir.exists(cache_folder_name)) {
+      dir.create(cache_folder_name)
+    }
+    if (is.null(cached_file_name)) {
+      cached_file_name <- stringr::str_split(json_url, "/")[[1]] %>% tail(1)
+    }
+    try(utils::download.file(json_url, cached_file_name))
+    if (file.exists(cached_file_name) & file.size(cached_file_name) > 1000) {
+      return(cached_file_name)
+    }
+  } else {
+    return(json_url)
+  }
 }
 
 

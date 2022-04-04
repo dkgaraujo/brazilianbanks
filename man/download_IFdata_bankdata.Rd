@@ -4,10 +4,12 @@
 \alias{download_IFdata_bankdata}
 \title{Downloads IF.Data data for a given quarter and consolidation type}
 \usage{
-download_IFdata_bankdata(yyyymm, type, cache_json)
+download_IFdata_bankdata(yyyymm, consolidation_type, cache_json)
 }
 \arguments{
 \item{yyyymm}{The quarter for which the data will be downloaded.}
+
+\item{consolidation_type}{One of the four consolidation types in IF.Data: 1 - Prudential conglomerates; 2 - Financial conglomerates; 3 - Financial Institutions; 4 - Foreign exchange institutions}
 
 \item{cache_json}{Boolean. Whether or not will downloaded data be cached locally.}
 }

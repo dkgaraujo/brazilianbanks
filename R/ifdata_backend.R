@@ -8,12 +8,12 @@
 #' @param consolidation_type One of the four consolidation types in IF.Data: 1 - Prudential conglomerates; 2 - Financial conglomerates; 3 - Financial Institutions; 4 - Foreign exchange institutions
 #' @param cache_json Boolean. Whether or not will downloaded data be cached locally.
 #' @return A `tibble` with the IF.Data values for that quarter.
-download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
+download_IFdata_values <- function(yyyymm, consolidation_type, var_codes, cache_json) {
 
   # Downloads files
-  df_values_1 <- download_IFdata_bankdata(yyyymm = yyyymm, type = 1, cache_json)
-  df_values_3 <- download_IFdata_bankdata(yyyymm = yyyymm, type = 3, cache_json)
-  df_values_4 <- download_IFdata_bankdata(yyyymm = yyyymm, type = 4, cache_json)
+  df_values_1 <- download_IFdata_bankdata(yyyymm = yyyymm, consolidation_type = 1, cache_json)
+  df_values_3 <- download_IFdata_bankdata(yyyymm = yyyymm, consolidation_type = 3, cache_json)
+  df_values_4 <- download_IFdata_bankdata(yyyymm = yyyymm, consolidation_type = 4, cache_json)
   df_values <- rbind(df_values_1, df_values_3, df_values_4)
   rm(df_values_1, df_values_3, df_values_4)
   gc()
@@ -34,15 +34,15 @@ download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
   # Merge datasets
   df_values <- df_values %>%
     dplyr::inner_join(df_bankinfo, by = c("FinInst" = "c0", "Quarter" = "Quarter")) %>%
-    dplyr::rename(CompleteName = c2) %>%
-    dplyr::rename(Institution.Type = c3) %>%
-    dplyr::rename(Control.Type = c6) %>%
-    dplyr::rename(Control.Type.Name = c7) %>%
-    dplyr::rename(BR.State = c10) %>%
-    dplyr::rename(BR.City = c11) %>%
-    dplyr::rename(Segment = c12) %>%
-    dplyr::rename(Number.Branches = c16) %>%
-    dplyr::rename(Number.BankServiceOutposts = c17) %>%
+    dplyr::rename(CompleteName = c2,
+                  Institution.Type = c3,
+                  Control.Type = c6,
+                  Control.Type.Name = c7,
+                  BR.State = c10,
+                  BR.City = c11,
+                  Segment = c12,
+                  Number.Branches = c16,
+                  Number.BankServiceOutposts = c17) %>%
     dplyr::mutate(Name = stringr::str_replace(CompleteName, stringr::fixed(" - PRUDENCIAL"), ""))
   return(df_values)
 }
@@ -51,12 +51,12 @@ download_IFdata_values <- function(yyyymm, consolidation_type, cache_json) {
 #'
 #' @inheritParams download_IFdata_values
 #' @return A data.frame with three columns: the financial institution identifier (FinInst), the variable code (info_id) and its value (value).
-download_IFdata_bankdata <- function(yyyymm, type, cache_json) {
+download_IFdata_bankdata <- function(yyyymm, consolidation_type, cache_json) {
   # Virtually all of the data are located in files with type = c(1, 3)
   # For some reason, it appears that consolidation type == 2 (financial conglomerates)
   # are represented in this file only by (consolidation) type = 3.
-  file_name <- paste0("dados", yyyymm, "_", type, ".json")
-  json_path <- find_json(yyyymm, file_name, cache_json = cache_json)
+  file_name <- paste0("dados", yyyymm, "_", consolidation_type, ".json")
+  json_path <- find_IFdata_json(yyyymm, file_name, cache_json = cache_json)
   json_data <- RJSONIO::fromJSON(json_path)$values
 
   df <- json_data %>%
@@ -71,9 +71,13 @@ download_IFdata_bankdata <- function(yyyymm, type, cache_json) {
   return(df)
 }
 
+#' Downloads information on the IF.Data variable names
+#'
+#' @inheritParams download_IFdata_values
 download_IFdata_variables <- function(yyyymm, cache_json) {
+  # column 'id' of 'info' is the same as column 'ifd' of the 'trel' variables
   file_name <- paste0("info", yyyymm, ".json")
-  json_path <- find_json(yyyymm, file_name)
+  json_path <- find_IFdata_json(yyyymm, file_name, cache_json = cache_json)
   json_info <- RJSONIO::fromJSON(json_path)
 
   info_names <- do.call(rbind.data.frame, json_info)
@@ -82,7 +86,7 @@ download_IFdata_variables <- function(yyyymm, cache_json) {
 
 download_IFdata_bankinfo <- function(yyyymm, consolidation_type = 1, cache_json) {
   file_name <- paste0("cadastro", yyyymm, "_100", consolidation_type + 3, ".json")
-  json_path <- find_json(yyyymm, file_name)
+  json_path <- find_IFdata_json(yyyymm, file_name, cache_json = cache_json)
   json_data <- RJSONIO::fromJSON(json_path)
 
   df_bankinfo <- json_data %>%
@@ -103,20 +107,24 @@ tidy_IFdata_values <- function(df_values) {
   return(df_values)
 }
 
-prepares_var_names <- function(yyyymm_start, yyyymm_end) {
+#' Organises the relationship between variable codes and human-readable names
+#'
+#' @inheritParams get_bank_stats
+#' @param reports_info A data.frame with information from all available IF.data reports for the selected dates
+prepares_var_names <- function(yyyymm_start, yyyymm_end, download_IFdata_reportsreports_info, cache_json) {
   quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
   variables <- list()
   for (qtr in quarters) {
-    variables[[as.character(qtr)]] <- download_IFdata_variables(qtr) %>%
+    variables[[as.character(qtr)]] <- download_IFdata_variables(qtr, cache_json = cache_json) %>%
       dplyr::rename(var_names = ni) %>%
       #dplyr::mutate(var_names = gsub("\\n.*", "", var_names, fixed = FALSE)) %>%
-      dplyr::mutate(var_names = gsub(" \\n", ": ", var_names, fixed = FALSE)) %>%
+      #dplyr::mutate(var_names = gsub(" \\n", ": ", var_names, fixed = FALSE)) %>%
       dplyr::mutate(var_names = ifelse(var_names == "", lid, var_names))
   }
   variables <- variables %>%
     dplyr::bind_rows(.id = "Quarter")
 
-  df_reports <- download_IFdata_reports(yyyymm_start) %>%
+  df_reports <- reports_info %>%
     lapply(function(x) reads_reports_json(x)) %>%
     dplyr::bind_rows() %>%
     dplyr::left_join(variables, by = c("c" = "id", "Quarter" = "Quarter")) %>%
@@ -126,23 +134,52 @@ prepares_var_names <- function(yyyymm_start, yyyymm_end) {
   return(df_reports)
 }
 
-download_IFdata_reports <- function(yyyymm_start) {
-  json_path <- find_json(yyyymm = NULL, file_name = "relatorios")
-  json_data <- RJSONIO::fromJSON(json_path)
+#' Downloads information about the IF.Data reports starting from yyyymm_start and the last available one if yyyymm_end is NULL
+#'
+#' @inheritParams get_bank_stats
+#' @return List with
+download_IFdata_reports <- function(yyyymm_start, yyyymm_end = NULL, cache_json) {
+  json_data <- download_IFdata_reports_info(cache_json = cache_json)
+  first_idx <- which_idx(yyyymm_start)
+  last_idx <- ifelse(is.null(yyyymm_end), length(json_data), which_idx(yyyymm_end))
+  return(json_data[first_idx:last_idx])
+}
 
-  # Finds the first index of the `relatorios` file that
-  # will be used (otherwised it will unnecessarily
-  # take up memory with databased that will not be used).
-  # The first index, ie json_data[[1]] refers to March 2020.
+#' Calculated the index in the list of reports coming from the BCB API
+#' @return A scalar that indexes the list of reports
+which_idx <- function(yyyymm) {
+  y <- as.numeric(substr(yyyymm, 1, 4))
+  qtr <- as.numeric(substr(yyyymm, 5, 6))
+  idx <- (y - 2000) * 4 + (qtr / 3)
+  return(idx)
+}
 
-  first_idx <- (round(yyyymm_start / 100, 0) - 2000) * 4 + 1
-  last_idx <- length(json_data)
-  json_data <- json_data[first_idx:last_idx]
+#' Downloads the information about all available dates directly from the BCB API
+#'
+#' @inheritParams get_bank_stats
+#' @return List with the full result from the BCB IF.data "relatorios" API endpoint.
+download_IFdata_reports_info <- function(cache_json) {
+  json_path <- find_IFdata_json(yyyymm = NULL, file_name = "relatorios", cache_json = cache_json)
+  return(RJSONIO::fromJSON(json_path))
+}
 
-  # * * *
-
-  return(json_data)
- }
+    # download_IFdata_reports <- function(yyyymm_start, cache_json) {
+    #   json_path <- find_IFdata_json(yyyymm = NULL, file_name = "relatorios", cache_json = cache_json)
+    #   json_data <- RJSONIO::fromJSON(json_path)
+    #
+    #   # Finds the first index of the `relatorios` file that
+    #   # will be used (otherwised it will unnecessarily
+    #   # take up memory with databased that will not be used).
+    #   # The first index, ie json_data[[1]] refers to March 2020.
+    #
+    #   first_idx <- (round(yyyymm_start / 100, 0) - 2000) * 4 + 1
+    #   last_idx <- length(json_data)
+    #   json_data <- json_data[first_idx:last_idx]
+    #
+    #   # * * *
+    #
+    #   return(json_data)
+    #  }
 
 reads_reports_json <- function(df_reports_element) {
 
@@ -156,7 +193,8 @@ reads_reports_json <- function(df_reports_element) {
       "ni",
       #"ci", # longer version of the template name
       "ifd",
-      "c"
+      "c",
+      "ip"
       )) %>%
     tidyr::pivot_wider(
       names_from = name_trel,
