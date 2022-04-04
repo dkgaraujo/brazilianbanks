@@ -58,10 +58,57 @@ get_bank_stats <- function(
   cadastroData <- cadastroData %>% dplyr::bind_rows(.id = "InstType")
 
   names(infoData) <- names(infoData) %>% substr(start = 1, stop = 6)
-  infoData <- infoData %>% dplyr::bind_rows(.id = "Quarter")
+  infoData <- infoData %>% lapply(function(x) dplyr::bind_rows(x)) %>% dplyr::bind_rows(.id = "Quarter")
 
   names(dadosData) <- names(dadosData) %>% stringr::str_extract(pattern = "(?<=s)[^s]*(?=\\.)")
-  dadosData <- dadosData %>% dplyr::bind_rows(.id = "QuarterType") %>% tidyr::separate(col = "QuarterType", into = c("Quarter", "DataRptType"), sep = "_")
+  dadosData <- dadosData %>% lapply(function(x) x$values %>%
+    lapply(function(x) {
+      df <- cbind(x$e, do.call(rbind.data.frame, x$v))
+      colnames(df) <- c("FinInst", "info_id", "value")
+      return(df)
+    }) %>% dplyr::bind_rows()) %>%
+    dplyr::bind_rows(.id = "QuarterType") %>%
+    tidyr::separate(col = "QuarterType", into = c("Quarter", "DataRptType"), sep = "_")
+
+  names(relatoriosData) <- names(relatoriosData) %>% stringr::str_extract(pattern = "(?<=l)[^s]*(?=\\.)")
+  # `cols_df` represents the variables of the columns with actual data on them
+  cols_df2 <- lapply(relatoriosData, function(x) Reduce(rbind, getColsFolhas(x$c))) %>%
+    Reduce(rbind, .) %>%
+    data.frame() %>%
+    dplyr::distinct() %>%
+    dplyr::select(-c(co, sc, nac))
+  rownames(cols_df) <- NULL
+
+  cols_df <- lapply(relatoriosData, function(x) getColsFolhas(x$c)) %>%
+    lapply(function(x) lapply(x, function(xx) c("id" = xx$id, "ifd" = xx$ifd, "ip" = xx$ip)) %>% dplyr::bind_rows()) %>%
+    dplyr::bind_rows(.id = "QuarterRpt") %>%
+    tidyr::separate(col = "QuarterRpt", into = c("Quarter", "Report"), sep = "_") %>%
+    dplyr::left_join(infoData, by = c("Quarter" = "Quarter", "ifd" = "id")) %>%
+    dplyr::rename(column_name = ni)
+
+  # `parent_cols_df` represents the columns that are only "parent" columns of their subdivisions
+  # these parent columns must be fetched from the data for their name, to couple with the subdivision
+  # column names (otherwise there would be a lot of information with the same column name).
+  parent_cols_df <- lapply(relatoriosData, function(x) {
+    xc <- x$c
+    xc[which(xc %>% lapply(function(x) length(x$sc)) %>% Reduce(c, .) > 0)] %>%
+      lapply(function(x) c("id" = x$id, "ifd" = x$ifd)) %>%
+      dplyr::bind_rows()}) %>%
+    dplyr::bind_rows(.id = "QuarterRpt") %>%
+    tidyr::separate(col = "QuarterRpt", into = c("Quarter", "Report")) %>%
+    dplyr::left_join(infoData, by = c("Quarter" = "Quarter", "ifd" = "id")) %>%
+    dplyr::rename(parent_name = ni) %>%
+    dplyr::select(-c(td, lid, ty))
+
+  all_data_info <- cols_df %>%
+    dplyr::left_join(parent_cols_df,
+                     by = c("Quarter" = "Quarter", "ip" = "id"),
+                     suffix = c("_column", "_parent")) %>%
+    dplyr::mutate(variable_name = paste(ifelse(is.na(parent_name), "", parent_name), column_name, sep = "__"))
+
+  # data_from_cadastro <- cols_df %>% dplyr::filter(td == 1)
+  # data_from_dados <- cols_df %>% dplyr::filter(td == 3)
+  # Combine the information to match the dataset with variable names
 
   ###
   var_codes <- prepares_var_names(yyyymm_start, yyyymm_end, reports_info, cache_json)

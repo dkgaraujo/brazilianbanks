@@ -1,4 +1,26 @@
+# New ----------------------------
+#' Utility that unnests information on nested columns from the original JSON format
+getColsFolhas <- function(colArray) {
+  list_cols <-
+    lapply(colArray, function(x) {
+      ifelse(length(x$sc) == 0,
+             return(x),
+             getColsFolhas(x$sc))
+    }) %>%
+    lapply(function(x) ifelse(length(x) == 1, return(x[[1]]), return(x)))
+  return(list_cols)
+}
 
+# getColsParents <- function(colArray) {
+#   list_cols <-
+#     lapply(colArray, function(x) {
+#       ifelse(length(x$sc) == 0,
+#              return(x),
+#              getColsFolhas(x$sc))
+#     }) %>%
+#     lapply(function(x) ifelse(length(x) == 1, return(x[[1]]), return(x)))
+#   return(list_cols)
+# }
 # fetching and preparing the data -----------------------------------------
 
 
