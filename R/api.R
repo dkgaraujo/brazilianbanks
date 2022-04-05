@@ -72,14 +72,28 @@ get_bank_stats <- function(
 
   names(relatoriosData) <- names(relatoriosData) %>% stringr::str_extract(pattern = "(?<=l)[^s]*(?=\\.)")
   # `cols_df` represents the variables of the columns with actual data on them
-  cols_df2 <- lapply(relatoriosData, function(x) Reduce(rbind, getColsFolhas(x$c))) %>%
-    Reduce(rbind, .) %>%
-    data.frame() %>%
-    dplyr::distinct() %>%
-    dplyr::select(-c(co, sc, nac))
-  rownames(cols_df) <- NULL
+      # cols_df2 <- lapply(relatoriosData, function(x) Reduce(rbind, getColsFolhas(x$c))) %>%
+      #   Reduce(rbind, .) %>%
+      #   data.frame() %>%
+      #   dplyr::distinct() %>%
+      #   dplyr::select(-c(co, sc, nac))
+      # rownames(cols_df) <- NULL
 
   cols_df <- lapply(relatoriosData, function(x) getColsFolhas(x$c)) %>%
+    lapply(function(x) {
+      list_cols <- list()
+      for (col_idx in 1:length(x)) {
+        if (length(x[[col_idx]]) == 11) {
+          colname <- paste0("col", x[[col_idx]]$id)
+          list_cols[[colname]] <- x[[col_idx]]
+        } else {
+          for (subcol_idx in 1:length(x[[col_idx]])) {
+            colname <- paste0("col", x[[col_idx]][[subcol_idx]]$id)
+            list_cols[[colname]] <- x[[col_idx]][[subcol_idx]]
+          }
+        }
+      }
+      return(list_cols)}) %>%
     lapply(function(x) lapply(x, function(xx) c("id" = xx$id, "ifd" = xx$ifd, "ip" = xx$ip)) %>% dplyr::bind_rows()) %>%
     dplyr::bind_rows(.id = "QuarterRpt") %>%
     tidyr::separate(col = "QuarterRpt", into = c("Quarter", "Report"), sep = "_") %>%
@@ -104,7 +118,13 @@ get_bank_stats <- function(
     dplyr::left_join(parent_cols_df,
                      by = c("Quarter" = "Quarter", "ip" = "id"),
                      suffix = c("_column", "_parent")) %>%
-    dplyr::mutate(variable_name = paste(ifelse(is.na(parent_name), "", parent_name), column_name, sep = "__"))
+    dplyr::mutate(variable_name = ifelse(is.na(parent_name),
+                                         column_name,
+                                         paste(parent_name, column_name, sep = "__")) %>%
+                    stringr::str_replace_all(" ", "_") %>%
+                    stringr::str_remove("(\\n).*") %>%
+                    stringr::str_remove("_$"))
+
 
   # data_from_cadastro <- cols_df %>% dplyr::filter(td == 1)
   # data_from_dados <- cols_df %>% dplyr::filter(td == 3)
