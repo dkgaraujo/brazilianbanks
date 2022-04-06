@@ -122,12 +122,18 @@ get_bank_stats <- function(
                                          column_name,
                                          paste(parent_name, column_name, sep = "__")) %>%
                     stringr::str_replace_all(" ", "_") %>%
+                    stringr::str_replace_all("Aapital", "Capital") %>%
                     stringr::str_remove("(\\n).*") %>%
-                    stringr::str_remove("_$"))
+                    stringr::str_remove("_$") %>%
+                    make.names())
 
+  x <- dadosData %>%
+    tibble::as_tibble() %>%
+    dplyr::left_join(all_data_info %>% dplyr::select(Quarter, lid, variable_name) %>% dplyr::distinct(),
+                     by = c("Quarter" = "Quarter", "info_id" = "lid"))
 
-  # data_from_cadastro <- cols_df %>% dplyr::filter(td == 1)
-  # data_from_dados <- cols_df %>% dplyr::filter(td == 3)
+  # data_from_cadastro <- all_data_info %>% dplyr::filter(td == 1)
+  # data_from_dados <- all_data_info %>% dplyr::filter(td == 3)
   # Combine the information to match the dataset with variable names
 
   ###
