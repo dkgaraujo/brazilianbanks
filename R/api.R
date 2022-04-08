@@ -114,6 +114,16 @@ get_bank_stats <- function(
     dplyr::rename(parent_name = ni) %>%
     dplyr::select(-c(td, lid, ty))
 
+  clean_col_names <-function(string) {
+    result <- string %>%
+      stringr::str_replace_all(" ", "_") %>%
+      stringr::str_replace_all("Aapital", "Capital") %>%
+      stringr::str_remove("(\\n).*") %>%
+      stringr::str_remove("_$") %>%
+      make.names()
+    return(result)
+  }
+
   all_data_info <- cols_df %>%
     dplyr::left_join(parent_cols_df,
                      by = c("Quarter" = "Quarter", "ip" = "id"),
@@ -121,16 +131,55 @@ get_bank_stats <- function(
     dplyr::mutate(variable_name = ifelse(is.na(parent_name),
                                          column_name,
                                          paste(parent_name, column_name, sep = "__")) %>%
-                    stringr::str_replace_all(" ", "_") %>%
-                    stringr::str_replace_all("Aapital", "Capital") %>%
-                    stringr::str_remove("(\\n).*") %>%
-                    stringr::str_remove("_$") %>%
-                    make.names())
+                    clean_col_names())
 
-  x <- dadosData %>%
+  dados <- dadosData %>%
     tibble::as_tibble() %>%
     dplyr::left_join(all_data_info %>% dplyr::select(Quarter, lid, variable_name) %>% dplyr::distinct(),
-                     by = c("Quarter" = "Quarter", "info_id" = "lid"))
+                     by = c("Quarter" = "Quarter", "info_id" = "lid")) %>%
+    dplyr::mutate(Quarter = yyyymm_to_Date(Quarter))
+
+  cadastroCols <- all_data_info %>%
+    dplyr::filter(td == 1) %>%
+    dplyr::select(lid, column_name) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(lid = paste0("c", lid),
+                  column_name = clean_col_names(column_name)) %>%
+    dplyr::arrange(lid)
+
+  cadastroLong <- cadastroData %>%
+    dplyr::mutate(FinInst = c0,
+                  Quarter = yyyymm_to_Date(c1),
+                  DataRptType = paste0(100, InstType)) %>%
+    tidyr::pivot_longer(cols = tidyr::starts_with("c"), names_to = "cnames", values_to = "values") %>%
+    dplyr::left_join(cadastroCols, by = c("cnames" = "lid")) %>%
+    dplyr::select(-InstType) %>%
+    dplyr::rename(v)
+
+  cadastro <- cadastroLong %>%
+    dplyr::filter(complete.cases(.)) %>%
+    dplyr::select(-cnames) %>%
+    dplyr::distinct() %>%
+    tidyr::pivot_wider(names_from = "column_name", values_from = "values") %>%
+    dplyr::select(-c(Code, Date)) %>%
+    dplyr::mutate(InstType = factor(InstType),
+                  FinInst = factor(FinInst),
+                  DataRptType = factor(DataRptType),
+                  TCB = factor(TCB),
+                  TD = factor(TD),
+                  TC = factor(TC),
+                  Segment = factor(Segment),
+                  Headquarters_._State = factor(Headquarters_._State),
+                  Headquarters_._City = factor(Headquarters_._City),
+                  SR = factor(SR),
+                  TI = factor(TI),
+                  Financial_Conglomerate = factor(Financial_Conglomerate),
+                  Prudential_Conglomerate = factor(Prudential_Conglomerate),
+                  Branches = as.numeric(Branches),
+                  Banking_Service_Outposts = as.numeric(Banking_Service_Outposts),
+                  Last_Change_of_Segment = yyyymm_to_Date(Last_Change_on_Segment),
+                  Conglomerate = factor(Conglomerate))
+
 
   # data_from_cadastro <- all_data_info %>% dplyr::filter(td == 1)
   # data_from_dados <- all_data_info %>% dplyr::filter(td == 3)
