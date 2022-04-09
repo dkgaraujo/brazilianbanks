@@ -35,6 +35,9 @@ get_bank_stats <- function(
   dadosData <- list()
   relatoriosData <- list()
   for (qtr in quarters) {
+    if (verbose) {
+      print(paste("Preparing data for quarter", yyyymm_to_Date(qtr)))
+    }
     reports_qtr <- reports_info[[which(quarters == qtr)]]
     file_names <- Reduce(c, Reduce(c, lapply(reports_qtr$files, function(x) x['f'])))
     for (file_name in file_names) {
@@ -137,7 +140,16 @@ get_bank_stats <- function(
     tibble::as_tibble() %>%
     dplyr::left_join(all_data_info %>% dplyr::select(Quarter, lid, variable_name) %>% dplyr::distinct(),
                      by = c("Quarter" = "Quarter", "info_id" = "lid")) %>%
-    dplyr::mutate(Quarter = yyyymm_to_Date(Quarter))
+    dplyr::mutate(Quarter = yyyymm_to_Date(Quarter)) %>%
+    dplyr::filter(info_id < 0 | info_id > 30)
+
+  dadosWide <- dados %>%
+    dplyr::select(-info_id) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(FinInst = factor(FinInst)) %>%
+    dplyr::filter(!is.na(variable_name)) %>%
+    tidyr::pivot_wider(names_from = variable_name, values_from = value, values_fn = mean)
+
 
   cadastroCols <- all_data_info %>%
     dplyr::filter(td == 1) %>%
@@ -152,9 +164,7 @@ get_bank_stats <- function(
                   Quarter = yyyymm_to_Date(c1),
                   DataRptType = paste0(100, InstType)) %>%
     tidyr::pivot_longer(cols = tidyr::starts_with("c"), names_to = "cnames", values_to = "values") %>%
-    dplyr::left_join(cadastroCols, by = c("cnames" = "lid")) %>%
-    dplyr::select(-InstType) %>%
-    dplyr::rename(v)
+    dplyr::left_join(cadastroCols, by = c("cnames" = "lid"))
 
   cadastro <- cadastroLong %>%
     dplyr::filter(complete.cases(.)) %>%
@@ -178,7 +188,27 @@ get_bank_stats <- function(
                   Branches = as.numeric(Branches),
                   Banking_Service_Outposts = as.numeric(Banking_Service_Outposts),
                   Last_Change_of_Segment = yyyymm_to_Date(Last_Change_on_Segment),
-                  Conglomerate = factor(Conglomerate))
+                  Conglomerate = factor(Conglomerate)) %>%
+    dplyr::select(-Last_Change_on_Segment) %>%
+    dplyr::filter(InstType != 1008) # this InstType 1008 only occurs in 2014-03-31
+
+  # The code chunk below fixes mannually some clear errors found in the data
+        # Error: segmentation date change in cadastro %>% dplyr::filter(Quarter == "2017-09-30" & FinInst == 31859) %>% tibble::glimpse()
+
+  zero_if_na <- function(x) return(ifelse(is.na(x), 0, x))
+
+  cadastroConglomerates <- cadastro %>%
+    dplyr::filter(InstType == 1004) %>% # keep only in the consolidated form (even if the congolomerate is a single bank, this is a comparable basis)
+    dplyr::mutate(congl_name = ifelse(is.na(Conglomerate) | Conglomerate == "", Financial_institution, Conglomerate)) %>%
+    dplyr::select(-c(InstType, DataRptType, Financial_institution, Segment, Financial_Conglomerate, Prudential_Conglomerate)) %>%
+    dplyr::mutate(Branches = zero_if_na(Branches),
+                  Banking_Service_Outposts = zero_if_na(Banking_Service_Outposts))
+
+all_data <- cadastroConglomerates %>%
+  # data for FinInst in InstType == 1004 also show up in dadosWide with DataRpttype == 3 but full of NAs, so I'm keeping only the DataRptType == 1
+  dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 1) %>% dplyr::select(-DataRptType),
+                   by = c("Quarter", "FinInst"))
+
 
 
   # data_from_cadastro <- all_data_info %>% dplyr::filter(td == 1)
