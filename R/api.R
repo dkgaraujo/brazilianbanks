@@ -146,9 +146,10 @@ get_bank_stats <- function(
   dadosWide <- dados %>%
     dplyr::select(-info_id) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(FinInst = factor(FinInst)) %>%
+    #dplyr::mutate(FinInst = factor(FinInst)) %>%
     dplyr::filter(!is.na(variable_name)) %>%
-    tidyr::pivot_wider(names_from = variable_name, values_from = value, values_fn = mean)
+    tidyr::pivot_wider(names_from = variable_name, values_from = value, values_fn = mean) %>%
+    dplyr::mutate(FinInst = as.character(FinInst))
 
 
   cadastroCols <- all_data_info %>%
@@ -166,97 +167,76 @@ get_bank_stats <- function(
     tidyr::pivot_longer(cols = tidyr::starts_with("c"), names_to = "cnames", values_to = "values") %>%
     dplyr::left_join(cadastroCols, by = c("cnames" = "lid"))
 
+  # From here on, the code focuses only on Prudential and Financial conglomerate consolidation levels
+  # the rationale for this is because they are the consolidation structures overseen by supervisors
+  # but also in practice, it is hard to combine all IF.data information in a single instance for each bank
+  # when conglomerates have more than one firm (which is totally natural, of course)
   cadastro <- cadastroLong %>%
-    dplyr::filter(complete.cases(.)) %>%
+    dplyr::filter(complete.cases(.) & InstType == 1004) %>%
     dplyr::select(-cnames) %>%
     dplyr::distinct() %>%
     tidyr::pivot_wider(names_from = "column_name", values_from = "values") %>%
     dplyr::select(-c(Code, Date)) %>%
-    dplyr::mutate(InstType = factor(InstType),
-                  FinInst = factor(FinInst),
-                  DataRptType = factor(DataRptType),
-                  TCB = factor(TCB),
-                  TD = factor(TD),
-                  TC = factor(TC),
-                  Segment = factor(Segment),
-                  Headquarters_._State = factor(Headquarters_._State),
-                  Headquarters_._City = factor(Headquarters_._City),
-                  SR = factor(SR),
-                  TI = factor(TI),
-                  Financial_Conglomerate = factor(Financial_Conglomerate),
-                  Prudential_Conglomerate = factor(Prudential_Conglomerate),
+    dplyr::mutate(#InstType = factor(InstType),
+                  #FinInst = factor(FinInst),
+                  #DataRptType = factor(DataRptType),
+                  #TCB = factor(TCB),
+                  #TD = factor(TD),
+                  #TC = factor(TC),
+                  #Segment = factor(Segment),
+                  #Headquarters_._State = factor(Headquarters_._State),
+                  #Headquarters_._City = factor(Headquarters_._City),
+                  #SR = factor(SR),
+                  #TI = factor(TI),
+                  #Financial_Conglomerate = factor(Financial_Conglomerate),
+                  #Prudential_Conglomerate = factor(Prudential_Conglomerate),
                   Branches = as.numeric(Branches),
                   Banking_Service_Outposts = as.numeric(Banking_Service_Outposts),
                   Last_Change_of_Segment = yyyymm_to_Date(Last_Change_on_Segment),
-                  Conglomerate = factor(Conglomerate)) %>%
+                  Conglomerate = factor(Conglomerate),
+                  Financial_Conglomerate = ifelse(Financial_Conglomerate == "" & TCB %in% c("b3C", "b3S"), FinInst, Financial_Conglomerate),
+                  Prudential_Conglomerate = ifelse(Prudential_Conglomerate == "" & TCB %in% c("b3C", "b3S"), FinInst, Prudential_Conglomerate)) %>%
     dplyr::select(-Last_Change_on_Segment) %>%
     dplyr::filter(InstType != 1008) # this InstType 1008 only occurs in 2014-03-31
 
-  # The code chunk below fixes mannually some clear errors found in the data
-        # Error: segmentation date change in cadastro %>% dplyr::filter(Quarter == "2017-09-30" & FinInst == 31859) %>% tibble::glimpse()
+  congl_data <- cadastro %>%
+    # first, at the prudential conglomerate level
+    dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 1) %>% select(-DataRptType), by = c("Quarter", "FinInst")) %>%
+    purrr::discard(~ all(is.na(.x))) %>%
+    # second, at the financial conglomerate level
+    dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 3) %>% select(-DataRptType), by = c("Quarter" = "Quarter", "Financial_Conglomerate" = "FinInst"), suffix = c("", "_FinCongl")) %>%
+    purrr::discard(~ all(is.na(.x)))
+    dplyr::select(-InstType)
 
-  zero_if_na <- function(x) return(ifelse(is.na(x), 0, x))
+  ######
 
-  cadastroConglomerates <- cadastro %>%
-    dplyr::filter(InstType == 1004) %>% # keep only in the consolidated form (even if the congolomerate is a single bank, this is a comparable basis)
-    dplyr::mutate(congl_name = ifelse(is.na(Conglomerate) | Conglomerate == "", Financial_institution, Conglomerate)) %>%
-    dplyr::select(-c(InstType, DataRptType, Financial_institution, Segment, Financial_Conglomerate, Prudential_Conglomerate)) %>%
-    dplyr::mutate(Branches = zero_if_na(Branches),
-                  Banking_Service_Outposts = zero_if_na(Banking_Service_Outposts))
-
-all_data <- cadastroConglomerates %>%
-  # data for FinInst in InstType == 1004 also show up in dadosWide with DataRpttype == 3 but full of NAs, so I'm keeping only the DataRptType == 1
-  dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 1) %>% dplyr::select(-DataRptType),
-                   by = c("Quarter", "FinInst"))
-
-
-
-  # data_from_cadastro <- all_data_info %>% dplyr::filter(td == 1)
-  # data_from_dados <- all_data_info %>% dplyr::filter(td == 3)
-  # Combine the information to match the dataset with variable names
-
-  ###
-  var_codes <- prepares_var_names(yyyymm_start, yyyymm_end, reports_info, cache_json)
-  quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
-
-  results <- list()
-
-  for (qtr in quarters) {
-    if (verbose) {
-      print(paste("Getting results for", qtr))
-    }
-    results[[as.character(qtr)]] <- download_IFdata_values(qtr, consolidation_type = 1, var_codes, cache_json)
+  if (banks_only) {
+    congl_data <- congl_data %>% dplyr::filter(TCB %in% c("b1", "b2"))
   }
 
-  if (verbose) {
-    print("`get_data` is now augmenting the dataset.")
-  }
-
-  results <- results %>%
-    prepare_data(banks_only = banks_only) %>%
-    loans_share_by_risk_level() %>%
-    loans_share_by_geographical_region() %>%
+  congl_data <- congl_data %>%
     excess_capital(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
 
-  results <- results %>%
+  ### To avoid breaking the code while working offline
+
+  congl_data <- congl_data %>%
     dplyr::left_join(download_GDP_data(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end), by = "Quarter")
 
-  if ("Segmentation_Total.Exposure.or.Total.Assets" %in% colnames(results)) {
-    results <- results %>%
-      dplyr::mutate(SizeByGDP = Segmentation_Total.Exposure.or.Total.Assets / AnnualGDP / 1000000)
+  if ("Total_Exposure_or_Total_Assets" %in% colnames(congl_data)) {
+    congl_data <- congl_data %>%
+      dplyr::mutate(SizeByGDP = Total_Exposure_or_Total_Assets / AnnualGDP / 1000000)
   } else {
     results <- results %>%
-      dplyr::mutate(SizeByGDP = Summary_Total.Assets / AnnualGDP / 1000000)
+      dplyr::mutate(SizeByGDP = Total_Assets / AnnualGDP / 1000000)
   }
 
-
   if (include_growthrate) {
-    results <- results %>%
+    all_data <- all_data %>%
       growthrate()
   }
 
   if (include_lag) {
-    results <- results %>%
+    all_data <- all_data %>%
       lag_numericvars()
   }
 
