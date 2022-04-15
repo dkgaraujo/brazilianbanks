@@ -113,3 +113,36 @@ getColsFolhas <- function(colArray) {
     lapply(function(x) ifelse(length(x) == 1, return(x[[1]]), return(x)))
   return(list_cols)
 }
+
+#' Returns a look-up table with the capital requirements in Brazil for each quarter.
+#' Numbers are valid for banks only so far only - especially credit unions and S5 have other values.
+#'
+#' @inheritParams get_bank_stats
+min_capital_requirements_quarter <- function(yyyymm_start, yyyymm_end, capital_requirements) {
+  stopifnot(yyyymm_start > 201400)
+  quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end) %>%
+    yyyymm_to_Date()
+  cols_capital <- colnames(capital_requirements)[-(1:2)]
+  result <- data.frame(matrix(
+    nrow = length(quarters),
+    ncol = length(cols_capital)
+  ))
+  rownames(result) <- quarters
+  colnames(result) <- cols_capital
+  for (qtr in rownames(result)) {
+    if (qtr < as.Date("2019-01-01")) {
+      result[qtr,] <- capital_requirements %>%
+        dplyr::filter(min_date >= qtr |  max_date >= qtr) %>%
+        dplyr::filter(min_date == min(min_date)) %>%
+        dplyr::select(-tidyselect::ends_with("date")) %>%
+        as.data.frame()
+    } else {
+      result[qtr,] <- capital_requirements %>%
+        dplyr::filter(min_date == as.Date("2019-01-01")) %>%
+        dplyr::select(-tidyselect::ends_with("date")) %>%
+        as.data.frame()
+    }
+  }
+  result <- tibble::as_tibble(cbind(Quarter = as.Date(rownames(result)), result))
+  return(result)
+}

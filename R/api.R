@@ -195,10 +195,8 @@ get_bank_stats <- function(
     purrr::discard(~ all(is.na(.x))) %>%
     # second, at the financial conglomerate level
     dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 3) %>% dplyr::select(-DataRptType), by = c("Quarter" = "Quarter", "Financial_Conglomerate" = "FinInst"), suffix = c("", "_FinCongl")) %>%
-    purrr::discard(~ all(is.na(.x)))
-    dplyr::select(-InstType)
-
-  ######
+    purrr::discard(~ all(is.na(.x))) %>%
+    dplyr::select(-c(InstType, DataRptType))
 
   if (banks_only) {
     congl_data <- congl_data %>% dplyr::filter(TCB %in% c("b1", "b2"))
@@ -206,8 +204,6 @@ get_bank_stats <- function(
 
   congl_data <- congl_data %>%
     excess_capital(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
-
-  ### To avoid breaking the code while working offline
 
   congl_data <- congl_data %>%
     dplyr::left_join(download_GDP_data(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end), by = "Quarter")

@@ -2,7 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
+.Rapp.history
 misc
 cache_json
 nbs
 inst/doc
+*.csv
+*.RDS
