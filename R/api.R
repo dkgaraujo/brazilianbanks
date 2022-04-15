@@ -117,16 +117,6 @@ get_bank_stats <- function(
     dplyr::rename(parent_name = ni) %>%
     dplyr::select(-c(td, lid, ty))
 
-  clean_col_names <-function(string) {
-    result <- string %>%
-      stringr::str_replace_all(" ", "_") %>%
-      stringr::str_replace_all("Aapital", "Capital") %>%
-      stringr::str_remove("(\\n).*") %>%
-      stringr::str_remove("_$") %>%
-      make.names()
-    return(result)
-  }
-
   all_data_info <- cols_df %>%
     dplyr::left_join(parent_cols_df,
                      by = c("Quarter" = "Quarter", "ip" = "id"),
@@ -201,10 +191,10 @@ get_bank_stats <- function(
 
   congl_data <- cadastro %>%
     # first, at the prudential conglomerate level
-    dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 1) %>% select(-DataRptType), by = c("Quarter", "FinInst")) %>%
+    dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 1) %>% dplyr::select(-DataRptType), by = c("Quarter", "FinInst")) %>%
     purrr::discard(~ all(is.na(.x))) %>%
     # second, at the financial conglomerate level
-    dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 3) %>% select(-DataRptType), by = c("Quarter" = "Quarter", "Financial_Conglomerate" = "FinInst"), suffix = c("", "_FinCongl")) %>%
+    dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 3) %>% dplyr::select(-DataRptType), by = c("Quarter" = "Quarter", "Financial_Conglomerate" = "FinInst"), suffix = c("", "_FinCongl")) %>%
     purrr::discard(~ all(is.na(.x)))
     dplyr::select(-InstType)
 
@@ -231,7 +221,7 @@ get_bank_stats <- function(
   }
 
   if (include_growthrate) {
-    all_data <- all_data %>%
+    congl_data <- congl_data %>%
       growthrate()
   }
 
@@ -251,7 +241,7 @@ get_bank_stats <- function(
 #' @inheritParams get_bank_stats
 #' @return A vector with all the available quarters in the format YYYYMM.
 #' @export
-all_available_quarters <- function(cache_json) {
+all_available_quarters <- function(cache_json = TRUE) {
   json_data <- download_IFdata_reports_info(cache_json = cache_json)
   return(Reduce(c, lapply(json_data, function (x) x$dt)))
 }

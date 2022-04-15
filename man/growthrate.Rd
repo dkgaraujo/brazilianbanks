@@ -2,7 +2,7 @@
 % Please edit documentation in R/ifdata_backend.R
 \name{growthrate}
 \alias{growthrate}
-\title{Adds columns with quarter-on-quarter growth for numeric columns}
+\title{PROBABLY WILL NOT BE INCLUDED: ITS A GOOD FUNCTION BUT VERY EPXENSIVE FOR A LARGE DATASE. Adds columns with quarter-on-quarter growth for numeric columns}
 \usage{
 growthrate(dataframe)
 }
@@ -13,5 +13,5 @@ growthrate(dataframe)
 A `tibble` with the bank-level information plus the added columns.
 }
 \description{
-Adds columns with quarter-on-quarter growth for numeric columns
+PROBABLY WILL NOT BE INCLUDED: ITS A GOOD FUNCTION BUT VERY EPXENSIVE FOR A LARGE DATASE. Adds columns with quarter-on-quarter growth for numeric columns
 }

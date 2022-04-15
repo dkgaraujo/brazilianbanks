@@ -12,13 +12,11 @@ find_IFdata_json(
 )
 }
 \arguments{
-\item{yyyymm}{The quarter for which the data will be downloaded.}
+\item{yyyymm}{Quarter}
 
 \item{file_name}{The name of the JSON file (including the extension) to be retrieved locally or remotely.}
 
 \item{cache_folder_name}{The local folder where the JSON files are (to be) cached.}
-
-\item{cache_json}{Boolean. Whether or not will downloaded data be cached locally.}
 }
 \value{
 The path to the JSON file saved locally (if `cache_json` is TRUE) or to its URL if FALSE.

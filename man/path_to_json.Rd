@@ -15,8 +15,6 @@ path_to_json(
 \item{cache_folder_name}{The local folder where the JSON files are (to be) cached.}
 
 \item{cached_file_name}{The full path to the file name where the JSON file is to be saved locally.}
-
-\item{cache_json}{Boolean. Whether or not will downloaded data be cached locally.}
 }
 \value{
 The path to the JSON file saved locally (if `cache_json` is TRUE) or to its URL if FALSE.

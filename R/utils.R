@@ -1,50 +1,6 @@
-prepare_data <- function(df_list, banks_only, verbose = TRUE) {
-  if (verbose) {
-    print("Preparing the dataset...")
-  }
-
-  # first step is to stack the information from the various dates
-  columns <- lapply(df_list, colnames)
-  common_cols <- Reduce(intersect, columns)
-  df <- df_list %>%
-    lapply(function(x) x[, common_cols]) %>%
-    Reduce(rbind, .)
-
-  # now we filter
-  if (banks_only) {
-    df <- df %>%
-      dplyr::filter(Institution.Type %in% c("b1", "b2"))
-  }
-
-  # finally, we ensure column names are syntactically valid names in R
-  df <- df %>%
-    dplyr::rename_with(make.names)
-
-  if (verbose) {
-    print("`prepare_data` is completed!")
-  }
-  return(df)
-}
-
-yyyymm_to_Date <- function(yyyymm, end_of_month = TRUE) {
-  newDate <- as.Date(paste0(yyyymm, "01"), format = "%Y%m%d")
-  if (end_of_month)
-    newDate <- newDate %>% lubridate::ceiling_date("month") - 1
-  return(newDate)
-}
-
-#' Lists all quarters between the starting and the end quarter
-#'
-#' @inheritParams get_bank_stats
-all_quarters_between <- function(yyyymm_start = 201803, yyyymm_end = 202106) {
-  quarters <- yyyymm_start:yyyymm_end
-  quarters <- quarters[substr(as.character(quarters), 5, 6) %in% c("03", "06", "09", "12")]
-  return(quarters)
-}
-
 #' Formats the path to a local or remote IF.data JSON file from the respective quarter.
 #'
-#' @inheritParams download_IFdata_bankdata
+#' @param yyyymm Quarter
 #' @param file_name The name of the JSON file (including the extension) to be retrieved locally or remotely.
 #' @param cache_folder_name The local folder where the JSON files are (to be) cached.
 #' @return The path to the JSON file saved locally (if `cache_json` is TRUE) or to its URL if FALSE.
@@ -94,6 +50,31 @@ path_to_json <- function(json_url, cache_folder_name = "cache_json", cached_file
   }
 }
 
+#' Lists all quarters between the starting and the end quarter
+#'
+#' @inheritParams get_bank_stats
+all_quarters_between <- function(yyyymm_start = 201803, yyyymm_end = 202106) {
+  quarters <- yyyymm_start:yyyymm_end
+  quarters <- quarters[substr(as.character(quarters), 5, 6) %in% c("03", "06", "09", "12")]
+  return(quarters)
+}
+
+yyyymm_to_Date <- function(yyyymm, end_of_month = TRUE) {
+  newDate <- as.Date(paste0(yyyymm, "01"), format = "%Y%m%d")
+  if (end_of_month)
+    newDate <- newDate %>% lubridate::ceiling_date("month") - 1
+  return(newDate)
+}
+
+clean_col_names <- function(string) {
+  result <- string %>%
+    stringr::str_replace_all(" ", "_") %>%
+    stringr::str_replace_all("Aapital", "Capital") %>%
+    stringr::str_remove("(\\n).*") %>%
+    stringr::str_remove("_$") %>%
+    make.names()
+  return(result)
+}
 
 #' Downloads GDP data from the Brazilian Institute of Geography and Statistics
 #'

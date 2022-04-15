@@ -4,7 +4,7 @@
 \alias{all_available_quarters}
 \title{Lists all quarters for which there is data available.}
 \usage{
-all_available_quarters(cache_json)
+all_available_quarters(cache_json = TRUE)
 }
 \arguments{
 \item{cache_json}{TRUE. Whether the JSON files with the raw data should be cached locally.}
