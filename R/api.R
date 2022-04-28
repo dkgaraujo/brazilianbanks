@@ -155,7 +155,6 @@ get_bank_stats <- function(
     tidyr::pivot_wider(names_from = variable_name, values_from = value, values_fn = mean) %>%
     dplyr::mutate(FinInst = as.character(FinInst))
 
-
   cadastroCols <- all_data_info %>%
     dplyr::filter(td == 1) %>%
     dplyr::select(lid, column_name) %>%
@@ -236,14 +235,14 @@ get_bank_stats <- function(
   }
 
   if (include_lag) {
-    all_data <- all_data %>%
+    congl_data <- congl_data %>%
       lag_numericvars()
   }
 
   if (verbose) {
     print("`get_data` is completed!")
   }
-  return(results)
+  return(congl_data)
 }
 
 #' Lists all quarters for which there is data available.
