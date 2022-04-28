@@ -3,7 +3,7 @@
 \docType{package}
 \name{brazilianbanks}
 \alias{brazilianbanks}
-\title{WIP WIP WIP brazilianbanks: Data on Brazilian banks and other regulated financial institutions}
+\title{brazilianbanks: Data on Brazilian banks and other regulated financial institutions}
 \description{
 A user-friendly interface to official datasets of bank-level variables
 sourced from the Central Bank of Brazil, in particular the 'IF.data' dataset.
@@ -16,6 +16,6 @@ This package uses two data sources: the 'IF.data' system maintained by the Centr
 
 \section{Functions}{
 
-The functions are...
+The functions are `available_quarters()` and `get_bank_stats()`.
 }
 
