@@ -226,7 +226,7 @@ get_bank_stats <- function(
     congl_data <- congl_data %>%
       dplyr::mutate(SizeByGDP = Total_Exposure_or_Total_Assets / AnnualGDP / 1000000)
   } else {
-    results <- results %>%
+    congl_data <- congl_data %>%
       dplyr::mutate(SizeByGDP = Total_Assets / AnnualGDP / 1000000)
   }
 
