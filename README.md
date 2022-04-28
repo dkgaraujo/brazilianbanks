@@ -12,14 +12,14 @@ devtools::install_github("dkgaraujo/brazilianbanks")
 ```
 
 ## Usage
-The function `available_quarters()` returns a vector with all the quarters for which there is available data. I suggest you run this function first, in particular to check what the most recent quarter is.
+The function `all_available_quarters()` returns a vector with all the quarters for which there is available data. I suggest you run this function first, in particular to check what the most recent quarter is.
 
 The main function is `get_bank_stats()`. It returns a tibble data frame with the panel data:
 
 ```
 library(brazilianbanks)
 
-quarters <- available_quarters()
+quarters <- all_available_quarters()
 bank_df <- get_bank_stats(yyyymm_start = 201903, yyyymm_end = max(quarters))
 ```
 
