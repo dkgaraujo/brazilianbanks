@@ -107,7 +107,7 @@ download_GDP_data <- function(yyyymm_start, yyyymm_end) {
     sapply(function(x) paste(substr(x, 1, 4), as.integer(substr(x, 5, 6)) / 3, sep = "0")) %>%
     paste(collapse = "|")
 
-  gdp <- RJSONIO::fromJSON(paste0("https://servicodados.ibge.gov.br/api/v3/agregados/1846/periodos/",qtrs ,"/variaveis/585?localidades=N1[all]&classificacao=11255[90707]"))
+  gdp <- RJSONIO::fromJSON(paste0("https://servicodados.ibge.gov.br/api/v3/agregados/1846/periodos/", qtrs,"/variaveis/585?localidades=N1[all]&classificacao=11255[90707]"))
   gdp <- as.integer(gdp[[1]]$resultados[[1]]$series[[1]]$serie) %>%
     zoo::rollapply(4, sum)
 

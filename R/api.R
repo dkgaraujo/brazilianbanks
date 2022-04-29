@@ -209,7 +209,7 @@ get_bank_stats <- function(
   }
 
   if (verbose) {
-    print("`get_data` is completed!")
+    print("`get_bank_stats` is completed!")
   }
   return(congl_data)
 }
