@@ -14,6 +14,7 @@
 
 #' Formats the path to a local or remote IF.data JSON file from the respective quarter.
 #'
+#' @inheritParams get_bank_stats
 #' @param yyyymm Quarter
 #' @param file_name The name of the JSON file (including the extension) to be retrieved locally or remotely.
 #' @param cache_folder_name The local folder where the JSON files are (to be) cached.
@@ -45,6 +46,8 @@ find_IFdata_json <- function(yyyymm = NULL, file_name, cache_folder_name = "cach
 #' Retrieves the path to a JSON file in the local system or in the internet.
 #'
 #' @inheritParams find_IFdata_json
+#' @inheritParams get_bank_stats
+#' @param json_url the URL to the JSON file
 #' @param cached_file_name The full path to the file name where the JSON file is to be saved locally.
 #' @return The path to the JSON file saved locally (if `cache_json` is TRUE) or to its URL if FALSE.
 path_to_json <- function(json_url, cache_folder_name = "cache_json", cached_file_name = NULL, cache_json) {

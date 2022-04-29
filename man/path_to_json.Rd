@@ -12,9 +12,13 @@ path_to_json(
 )
 }
 \arguments{
+\item{json_url}{the URL to the JSON file}
+
 \item{cache_folder_name}{The local folder where the JSON files are (to be) cached.}
 
 \item{cached_file_name}{The full path to the file name where the JSON file is to be saved locally.}
+
+\item{cache_json}{TRUE. Whether the JSON files with the raw data should be cached locally.}
 }
 \value{
 The path to the JSON file saved locally (if `cache_json` is TRUE) or to its URL if FALSE.

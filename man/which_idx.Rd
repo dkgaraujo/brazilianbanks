@@ -6,6 +6,9 @@
 \usage{
 which_idx(yyyymm)
 }
+\arguments{
+\item{yyyymm}{The quarter of interest in the format YYYYMM}
+}
 \value{
 A scalar that indexes the list of reports
 }

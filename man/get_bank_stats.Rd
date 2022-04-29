@@ -9,7 +9,6 @@ get_bank_stats(
   yyyymm_end,
   banks_only = TRUE,
   include_growthrate = TRUE,
-  include_lag = FALSE,
   cache_json = TRUE,
   verbose = TRUE
 )
@@ -23,13 +22,9 @@ get_bank_stats(
 
 \item{include_growthrate}{TRUE. Whether the quarter-on-quarter growth rate for the numeric variables should be calculated.}
 
-\item{include_lag}{TRUE. Whether the numeric variables should also be lagged.}
-
 \item{cache_json}{TRUE. Whether the JSON files with the raw data should be cached locally.}
 
 \item{verbose}{Whether the function must inform the user as it progresses.}
-
-\item{sources}{Which data sources of bank-level data to download. Currently only "IF.data", the bank-level dataset made publicly available by the Central Bank of Brazil is available.}
 }
 \value{
 A `tibble` with the bank-level time series in a tidy format.

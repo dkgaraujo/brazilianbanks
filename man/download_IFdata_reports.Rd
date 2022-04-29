@@ -14,7 +14,7 @@ download_IFdata_reports(yyyymm_start, yyyymm_end = NULL, cache_json)
 \item{cache_json}{TRUE. Whether the JSON files with the raw data should be cached locally.}
 }
 \value{
-List with
+List with the reports available for the period between the desired quarters
 }
 \description{
 Downloads information about the IF.Data reports starting from yyyymm_start and the last available one if yyyymm_end is NULL

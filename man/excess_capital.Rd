@@ -8,6 +8,10 @@ excess_capital(dataframe, yyyymm_start, yyyymm_end)
 }
 \arguments{
 \item{dataframe}{A `tibble` containing the bank-level information.}
+
+\item{yyyymm_start}{Start calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.}
+
+\item{yyyymm_end}{End calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.}
 }
 \value{
 A `tibble` with the bank-level information plus the added columns.

@@ -15,7 +15,7 @@
 #' Downloads information about the IF.Data reports starting from yyyymm_start and the last available one if yyyymm_end is NULL
 #'
 #' @inheritParams get_bank_stats
-#' @return List with
+#' @return List with the reports available for the period between the desired quarters
 download_IFdata_reports <- function(yyyymm_start, yyyymm_end = NULL, cache_json) {
   json_data <- download_IFdata_reports_info(cache_json = cache_json)
   first_idx <- which_idx(yyyymm_start)
@@ -32,8 +32,23 @@ download_IFdata_reports_info <- function(cache_json) {
   return(RJSONIO::fromJSON(json_path))
 }
 
+#' Retrieves column information from the JSON files provided by the BCB, especially designed to deal with its nested structured
+#'
+#' @param x The list of column (or subcolums) information
+#' @return A vector with the relevant information for each column
+subcols <- function(x) {
+  lapply(x, function(x)
+    if (length(x$sc) == 0) {
+      unlist(x)
+    } else {
+      subcols(x$sc)
+    })
+}
+
 
 #' Finds the index in the list of reports coming from the BCB API
+#'
+#' @param yyyymm The quarter of interest in the format YYYYMM
 #' @return A scalar that indexes the list of reports
 which_idx <- function(yyyymm) {
   y <- as.numeric(substr(yyyymm, 1, 4))
@@ -44,6 +59,7 @@ which_idx <- function(yyyymm) {
 
 #' Adds a column with each firm's D-SIB status (ie, whether they are one of the domestic systemically important banks) and excess capital
 #'
+#' @inheritParams get_bank_stats
 #' @param dataframe A `tibble` containing the bank-level information.
 #' @return A `tibble` with the bank-level information plus the added columns.
 excess_capital <- function(dataframe, yyyymm_start, yyyymm_end) {
@@ -55,8 +71,8 @@ excess_capital <- function(dataframe, yyyymm_start, yyyymm_end) {
     capital_requirements = capital_requirements
   )
 
-  # OBS.: Currently, the identification of D-SIBs is explicit.
-  # Ideally it should be automatic by following the regulatory definition.
+  # OBS.: Currently, the identification of D-SIBs is hard-coded.
+  # Ideally it should be automatic by following the regulatory definition (ie, exposure measure > 10% GDP).
   dataframe <- dataframe %>%
     dplyr::mutate(
       DSIB = ifelse(FinInst %in% c(1000080075, # Bradesco
@@ -80,7 +96,7 @@ excess_capital <- function(dataframe, yyyymm_start, yyyymm_end) {
   return(dataframe)
 }
 
-#' PROBABLY WILL NOT BE INCLUDED: ITS A GOOD FUNCTION BUT VERY EPXENSIVE FOR A LARGE DATASE. Adds columns with quarter-on-quarter growth for numeric columns
+#' Adds columns with quarter-on-quarter growth for numeric variables of each bank
 #'
 #' @param dataframe A `tibble` containing the bank-level information.
 #' @return A `tibble` with the bank-level information plus the added columns.
@@ -98,40 +114,11 @@ growthrate <- function(dataframe) {
   return(dataframe)
 }
 
-#' Adds columns with (one period) lagged information for numeric columns
-#'
-#' @param dataframe A `tibble` containing the bank-level information.
-#' @return A `tibble` with the bank-level information plus the added columns.
-lag_numericvars <- function(dataframe) {
-  dataframe <- dataframe %>%
-    dplyr::group_by(FinInst) %>%
-    dplyr::mutate(
-      dplyr::across(
-        tidyselect:::where(is.numeric),
-        .fns = list(lag_var = ~ dplyr::lag(.x, order_by = Quarter)),
-        .names = "lag_{col}"
-      )
-    ) %>%
-    dplyr::ungroup()
-  return(dataframe)
-}
-
-#' Utility that unnests information on nested columns from the original JSON format
-getColsFolhas <- function(colArray) {
-  list_cols <-
-    lapply(colArray, function(x) {
-      ifelse(length(x$sc) == 0,
-             return(x),
-             getColsFolhas(x$sc))
-    }) %>%
-    lapply(function(x) ifelse(length(x) == 1, return(x[[1]]), return(x)))
-  return(list_cols)
-}
-
 #' Returns a look-up table with the capital requirements in Brazil for each quarter.
 #' Numbers are valid for banks only so far only - especially credit unions and S5 have other values.
 #'
 #' @inheritParams get_bank_stats
+#' @param capital_requirements A tibble with the regulatory capital requirements at each date
 min_capital_requirements_quarter <- function(yyyymm_start, yyyymm_end, capital_requirements) {
   stopifnot(yyyymm_start > 201400)
   quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end) %>%

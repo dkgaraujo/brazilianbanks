@@ -16,10 +16,8 @@
 #'
 #' @param yyyymm_start Start calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
 #' @param yyyymm_end End calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
-#' @param sources Which data sources of bank-level data to download. Currently only "IF.data", the bank-level dataset made publicly available by the Central Bank of Brazil is available.
 #' @param banks_only TRUE. Whether only the observations related to banks should be kept.
 #' @param include_growthrate TRUE. Whether the quarter-on-quarter growth rate for the numeric variables should be calculated.
-#' @param include_lag TRUE. Whether the numeric variables should also be lagged.
 #' @param cache_json TRUE. Whether the JSON files with the raw data should be cached locally.
 #' @param verbose Whether the function must inform the user as it progresses.
 #' @return A `tibble` with the bank-level time series in a tidy format.
@@ -32,7 +30,6 @@ get_bank_stats <- function(
   yyyymm_start, yyyymm_end,
   banks_only = TRUE,
   include_growthrate = TRUE,
-  include_lag = FALSE,
   cache_json = TRUE,
   verbose = TRUE) {
 
@@ -88,32 +85,14 @@ get_bank_stats <- function(
     tidyr::separate(col = "QuarterType", into = c("Quarter", "DataRptType"), sep = "_")
 
   names(relatoriosData) <- names(relatoriosData) %>% stringr::str_extract(pattern = "(?<=l)[^s]*(?=\\.)")
-  # `cols_df` represents the variables of the columns with actual data on them
-      # cols_df2 <- lapply(relatoriosData, function(x) Reduce(rbind, getColsFolhas(x$c))) %>%
-      #   Reduce(rbind, .) %>%
-      #   data.frame() %>%
-      #   dplyr::distinct() %>%
-      #   dplyr::select(-c(co, sc, nac))
-      # rownames(cols_df) <- NULL
 
-  cols_df <- lapply(relatoriosData, function(x) getColsFolhas(x$c)) %>%
-    lapply(function(x) {
-      list_cols <- list()
-      for (col_idx in 1:length(x)) {
-        if (length(x[[col_idx]]) == 11) {
-          colname <- paste0("col", x[[col_idx]]$id)
-          list_cols[[colname]] <- x[[col_idx]]
-        } else {
-          for (subcol_idx in 1:length(x[[col_idx]])) {
-            colname <- paste0("col", x[[col_idx]][[subcol_idx]]$id)
-            list_cols[[colname]] <- x[[col_idx]][[subcol_idx]]
-          }
-        }
-      }
-      return(list_cols)}) %>%
-    lapply(function(x) lapply(x, function(xx) c("id" = xx$id, "ifd" = xx$ifd, "ip" = xx$ip)) %>% dplyr::bind_rows()) %>%
-    dplyr::bind_rows(.id = "QuarterRpt") %>%
+  cols_df <- lapply(relatoriosData, function(x)
+    x$c %>% subcols() %>% lapply(dplyr::bind_rows) %>% dplyr::bind_rows()
+   ) %>% dplyr::bind_rows(.id = "QuarterRpt") %>%
     tidyr::separate(col = "QuarterRpt", into = c("Quarter", "Report"), sep = "_") %>%
+    dplyr::select(Quarter, Report, id, ifd, ip) %>%
+    dplyr::mutate(ifd = as.integer(ifd),
+                  ip = as.integer(ip)) %>%
     dplyr::left_join(infoData, by = c("Quarter" = "Quarter", "ifd" = "id")) %>%
     dplyr::rename(column_name = ni)
 
@@ -139,6 +118,10 @@ get_bank_stats <- function(
                                          column_name,
                                          paste(parent_name, column_name, sep = "__")) %>%
                     clean_col_names())
+
+  if (verbose) {
+    print("Merging data with column name")
+  }
 
   dados <- dadosData %>%
     tibble::as_tibble() %>%
@@ -180,20 +163,7 @@ get_bank_stats <- function(
     dplyr::distinct() %>%
     tidyr::pivot_wider(names_from = "column_name", values_from = "values") %>%
     dplyr::select(-c(Code, Date)) %>%
-    dplyr::mutate(#InstType = factor(InstType),
-                  #FinInst = factor(FinInst),
-                  #DataRptType = factor(DataRptType),
-                  #TCB = factor(TCB),
-                  #TD = factor(TD),
-                  #TC = factor(TC),
-                  #Segment = factor(Segment),
-                  #Headquarters_._State = factor(Headquarters_._State),
-                  #Headquarters_._City = factor(Headquarters_._City),
-                  #SR = factor(SR),
-                  #TI = factor(TI),
-                  #Financial_Conglomerate = factor(Financial_Conglomerate),
-                  #Prudential_Conglomerate = factor(Prudential_Conglomerate),
-                  Branches = as.numeric(Branches),
+    dplyr::mutate(Branches = as.numeric(Branches),
                   Banking_Service_Outposts = as.numeric(Banking_Service_Outposts),
                   Last_Change_of_Segment = yyyymm_to_Date(Last_Change_on_Segment),
                   Conglomerate = factor(Conglomerate),
@@ -230,13 +200,12 @@ get_bank_stats <- function(
   }
 
   if (include_growthrate) {
+    if (verbose) {
+      print("Calculating the growth rate for the numeric variables")
+    }
+
     congl_data <- congl_data %>%
       growthrate()
-  }
-
-  if (include_lag) {
-    congl_data <- congl_data %>%
-      lag_numericvars()
   }
 
   if (verbose) {
