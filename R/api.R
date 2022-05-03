@@ -86,6 +86,10 @@ get_bank_stats <- function(
 
   names(relatoriosData) <- names(relatoriosData) %>% stringr::str_extract(pattern = "(?<=l)[^s]*(?=\\.)")
 
+  if (verbose) {
+    print("Organising column information")
+  }
+
   cols_df <- lapply(relatoriosData, function(x)
     x$c %>% subcols() %>% lapply(dplyr::bind_rows) %>% dplyr::bind_rows()
    ) %>% dplyr::bind_rows(.id = "QuarterRpt") %>%
@@ -130,6 +134,14 @@ get_bank_stats <- function(
     dplyr::mutate(Quarter = yyyymm_to_Date(Quarter)) %>%
     dplyr::filter(info_id < 0 | info_id > 30)
 
+  ### the fix below needs to be made due to how data from Caixa Econômica Federal is wrongly represented in a quarter by its CNPJ not the conglomerate number
+  ### the situation is associated with Issue #2: https://github.com/dkgaraujo/brazilianbanks/issues/2
+      qtrs_data <- unique(dados$Quarter)
+      qtrs_dataproblem_Caixa <- qtrs_data[sapply(qtrs_data, function(x) dados %>% filter(Quarter == x & DataRptType == 3 & FinInst == 51626) %>% nrow()) == 0]
+      dados <- dados %>%
+        dplyr::mutate(FinInst = ifelse(Quarter %in% qtrs_dataproblem_Caixa & DataRptType == 3 & FinInst == 360305, 51626, FinInst))
+  ### end of ad-hoc fix
+
   dadosWide <- dados %>%
     dplyr::select(-info_id) %>%
     dplyr::distinct() %>%
@@ -168,7 +180,9 @@ get_bank_stats <- function(
                   Last_Change_of_Segment = yyyymm_to_Date(Last_Change_on_Segment),
                   Conglomerate = factor(Conglomerate),
                   Financial_Conglomerate = ifelse(Financial_Conglomerate == "" & TCB %in% c("b3C", "b3S"), FinInst, Financial_Conglomerate),
-                  Prudential_Conglomerate = ifelse(Prudential_Conglomerate == "" & TCB %in% c("b3C", "b3S"), FinInst, Prudential_Conglomerate)) %>%
+                  Prudential_Conglomerate = ifelse(Prudential_Conglomerate == "" & TCB %in% c("b3C", "b3S"), FinInst, Prudential_Conglomerate),
+                  # this last correction below is needed because the identifier for this bank is not correctly placed in all quarters
+                  Financial_Conglomerate = ifelse(Financial_Conglomerate == "" & FinInst == 1000080738, 51626, Financial_Conglomerate)) %>%
     dplyr::select(-Last_Change_on_Segment) %>%
     dplyr::filter(InstType != 1008) # this InstType 1008 only occurs in 2014-03-31
 
