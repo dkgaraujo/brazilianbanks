@@ -2,7 +2,7 @@
 % Please edit documentation in R/ifdata_backend.R
 \name{download_IFdata_reports_info}
 \alias{download_IFdata_reports_info}
-\title{Downloads the information about all available dates directly from the BCB API}
+\title{Downloads the information about all available dates directly from the BCB website or from cached files}
 \usage{
 download_IFdata_reports_info(cache_json)
 }
@@ -13,5 +13,5 @@ download_IFdata_reports_info(cache_json)
 List with the full result from the BCB IF.data "relatorios" API endpoint.
 }
 \description{
-Downloads the information about all available dates directly from the BCB API
+Downloads the information about all available dates directly from the BCB website or from cached files
 }

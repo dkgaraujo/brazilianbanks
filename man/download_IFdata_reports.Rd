@@ -2,7 +2,7 @@
 % Please edit documentation in R/ifdata_backend.R
 \name{download_IFdata_reports}
 \alias{download_IFdata_reports}
-\title{Downloads information about the IF.Data reports starting from yyyymm_start and the last available one if yyyymm_end is NULL}
+\title{Downloads information about the IF.Data reports in the selected dates or up to the last available date if `yyyymm_end` is `NULL`}
 \usage{
 download_IFdata_reports(yyyymm_start, yyyymm_end = NULL, cache_json)
 }
@@ -17,5 +17,5 @@ download_IFdata_reports(yyyymm_start, yyyymm_end = NULL, cache_json)
 List with the reports available for the period between the desired quarters
 }
 \description{
-Downloads information about the IF.Data reports starting from yyyymm_start and the last available one if yyyymm_end is NULL
+Downloads information about the IF.Data reports in the selected dates or up to the last available date if `yyyymm_end` is `NULL`
 }

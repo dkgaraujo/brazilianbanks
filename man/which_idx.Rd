@@ -2,7 +2,7 @@
 % Please edit documentation in R/ifdata_backend.R
 \name{which_idx}
 \alias{which_idx}
-\title{Finds the index in the list of reports coming from the BCB API}
+\title{Returns the index in the list of reports coming from the BCB API}
 \usage{
 which_idx(yyyymm)
 }
@@ -13,5 +13,5 @@ which_idx(yyyymm)
 A scalar that indexes the list of reports
 }
 \description{
-Finds the index in the list of reports coming from the BCB API
+Returns the index in the list of reports coming from the BCB API
 }

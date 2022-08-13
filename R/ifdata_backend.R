@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Downloads information about the IF.Data reports starting from yyyymm_start and the last available one if yyyymm_end is NULL
+#' Downloads information about the IF.Data reports in the selected dates or up to the last available date if `yyyymm_end` is `NULL`
 #'
 #' @inheritParams get_bank_stats
 #' @return List with the reports available for the period between the desired quarters
@@ -23,7 +23,7 @@ download_IFdata_reports <- function(yyyymm_start, yyyymm_end = NULL, cache_json)
   return(json_data[first_idx:last_idx])
 }
 
-#' Downloads the information about all available dates directly from the BCB API
+#' Downloads the information about all available dates directly from the BCB website or from cached files
 #'
 #' @inheritParams get_bank_stats
 #' @return List with the full result from the BCB IF.data "relatorios" API endpoint.
@@ -46,7 +46,7 @@ subcols <- function(x) {
 }
 
 
-#' Finds the index in the list of reports coming from the BCB API
+#' Returns the index in the list of reports coming from the BCB API
 #'
 #' @param yyyymm The quarter of interest in the format YYYYMM
 #' @return A scalar that indexes the list of reports
