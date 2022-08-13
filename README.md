@@ -1,3 +1,7 @@
+<!-- badges: start -->
+[![Codecov test coverage](https://codecov.io/gh/dkgaraujo/brazilianbanks/branch/main/graph/badge.svg)](https://app.codecov.io/gh/dkgaraujo/brazilianbanks?branch=main)
+<!-- badges: end -->
+
 `brazilianbanks` is an R package to download publicly-available data on Brazilian banks and other regulated financial institutions. This is a rich panel dataset that includes information ranging from total assets to number of physical branches to the growth in credit to specific economic sectors according to a maturity bucket. 
 
 The package should be functional but has not been officially released yet. Its alpha version will be released once the appropriate tests are included and the documentation is written more extensively. The plan is to eventually submit the package to CRAN.
