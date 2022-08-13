@@ -70,7 +70,7 @@ path_to_json <- function(json_url, cache_folder_name = "cache_json", cached_file
 #' Lists all quarters between the starting and the end quarter
 #'
 #' @inheritParams get_bank_stats
-all_quarters_between <- function(yyyymm_start = 201803, yyyymm_end = 202106) {
+all_quarters_between <- function(yyyymm_start = 201703, yyyymm_end = 202109) {
   quarters <- yyyymm_start:yyyymm_end
   quarters <- quarters[substr(as.character(quarters), 5, 6) %in% c("03", "06", "09", "12")]
   return(quarters)
