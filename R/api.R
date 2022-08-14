@@ -49,8 +49,13 @@ get_bank_stats <- function(
     if (verbose) {
       print(paste("Preparing data for quarter", yyyymm_to_Date(qtr)))
     }
+
+    # all the JSON files with data available for that particular quarter...
     reports_qtr <- reports_info[[which(quarters == qtr)]]
+
+    # ... are now listed in a way as to find them from the BCB endpoint.
     file_names <- Reduce(c, Reduce(c, lapply(reports_qtr$files, function(x) x['f'])))
+
     for (file_name in file_names) {
       if (grepl("/cadastro", file_name))
         cadastroData[[file_name]] <- jsonlite::read_json(find_IFdata_json(file_name = file_name, cache_json = cache_json)) %>%
@@ -186,12 +191,21 @@ get_bank_stats <- function(
     dplyr::select(-Last_Change_on_Segment) %>%
     dplyr::filter(InstType != 1008) # this InstType 1008 only occurs in 2014-03-31
 
+  # congl_data <- cadastro %>%
+  #   # first, at the prudential conglomerate level
+  #   dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 1) %>% dplyr::select(-DataRptType), by = c("Quarter", "FinInst")) %>%
+  #   purrr::discard(~ all(is.na(.x))) %>%
+  #   # second, at the financial conglomerate level
+  #   dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 3) %>% dplyr::select(-DataRptType), by = c("Quarter" = "Quarter", "Financial_Conglomerate" = "FinInst"), suffix = c("", "_FinCongl")) %>%
+  #   purrr::discard(~ all(is.na(.x))) %>%
+  #   dplyr::select(-c(InstType, DataRptType))
+
   congl_data <- cadastro %>%
     # first, at the prudential conglomerate level
     dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 1) %>% dplyr::select(-DataRptType), by = c("Quarter", "FinInst")) %>%
     purrr::discard(~ all(is.na(.x))) %>%
     # second, at the financial conglomerate level
-    dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 3) %>% dplyr::select(-DataRptType), by = c("Quarter" = "Quarter", "Financial_Conglomerate" = "FinInst"), suffix = c("", "_FinCongl")) %>%
+    dplyr::left_join(dadosWide %>% dplyr::filter(DataRptType == 3) %>% dplyr::select(-DataRptType), by = c("Quarter" = "Quarter", "FinInst" = "FinInst"), suffix = c("", "_FinCongl")) %>%
     purrr::discard(~ all(is.na(.x))) %>%
     dplyr::select(-c(InstType, DataRptType))
 
