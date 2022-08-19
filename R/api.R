@@ -72,6 +72,10 @@ get_bank_stats <- function(
     }
   }
 
+  # stores some basic information about each IF.data report page
+  reports <- lapply(relatoriosData, function(x) list(id = as.character(x$id), Report_name = x$ni, ifd = x$ifd)) %>%
+    dplyr::bind_rows(.id = "File")
+
   # transform the data into more efficient / fluid formats to work with
   names(cadastroData) <- names(cadastroData) %>% stringr::str_extract(pattern = "(?<=_)[^_]*(?=\\.)")
   cadastroData <- cadastroData %>% dplyr::bind_rows(.id = "InstType")
@@ -123,13 +127,15 @@ get_bank_stats <- function(
     dplyr::left_join(parent_cols_df,
                      by = c("Quarter" = "Quarter", "ip" = "id"),
                      suffix = c("_column", "_parent")) %>%
+    dplyr::left_join(reports %>% dplyr::select(id, Report_name),
+                     by = c("Report_column" = "id")) %>%
     dplyr::mutate(variable_name = ifelse(is.na(parent_name),
                                          column_name,
-                                         paste(parent_name, column_name, sep = "__")) %>%
+                                         paste(Report_name, parent_name, column_name, sep = "__")) %>%
                     clean_col_names())
 
   if (verbose) {
-    print("Merging data with column name")
+    print("Merging data with column names")
   }
 
   dados <- dadosData %>%
@@ -141,10 +147,7 @@ get_bank_stats <- function(
 
   ### the fix below needs to be made due to how data from Caixa Econômica Federal is wrongly represented in a quarter by its CNPJ not the conglomerate number
   ### the situation is associated with Issue #2: https://github.com/dkgaraujo/brazilianbanks/issues/2
-      qtrs_data <- unique(dados$Quarter)
-      qtrs_dataproblem_Caixa <- qtrs_data[sapply(qtrs_data, function(x) dados %>% filter(Quarter == x & DataRptType == 3 & FinInst == 51626) %>% nrow()) == 0]
-      dados <- dados %>%
-        dplyr::mutate(FinInst = ifelse(Quarter %in% qtrs_dataproblem_Caixa & DataRptType == 3 & FinInst == 360305, 51626, FinInst))
+      dados <- dados %>% dplyr::filter(!FinInst == 360305)
   ### end of ad-hoc fix
 
   dadosWide <- dados %>%
