@@ -87,9 +87,11 @@ clean_col_names <- function(string) {
   result <- string %>%
     stringr::str_replace_all(" ", "_") %>%
     stringr::str_replace_all("Aapital", "Capital") %>%
-    stringr::str_remove("(\\n).*") %>%
+    stringr::str_replace_all("mediun", "medium") %>%
+    stringr::str_remove_all("(\\n).*") %>%
     stringr::str_remove("_$") %>%
-    make.names()
+    make.names() %>%
+    stringr::str_replace_all("\\.", "_")
   return(result)
 }
 
