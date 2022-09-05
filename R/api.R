@@ -17,6 +17,7 @@
 #' @param yyyymm_start Start calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
 #' @param yyyymm_end End calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
 #' @param banks_only TRUE. Whether only the observations related to banks should be kept.
+#' @param adjust_income_data TRUE. Whether income statement variables should be adjusted to reflect only developments within each quarter.
 #' @param include_growthrate TRUE. Whether the quarter-on-quarter growth rate for the numeric variables should be calculated.
 #' @param cache_json TRUE. Whether the JSON files with the raw data should be cached locally.
 #' @param verbose Whether the function must inform the user as it progresses.
@@ -29,6 +30,7 @@
 get_bank_stats <- function(
   yyyymm_start, yyyymm_end,
   banks_only = TRUE,
+  adjust_income_data = TRUE,
   include_growthrate = TRUE,
   cache_json = TRUE,
   verbose = TRUE) {
@@ -228,6 +230,16 @@ get_bank_stats <- function(
   } else {
     congl_data <- congl_data %>%
       dplyr::mutate(SizeByGDP = Total_Assets / AnnualGDP / 1000000)
+  }
+
+  if (adjust_income_data) {
+    if (verbose) {
+      print("Adjusting income data to reflect only quarterly performance")
+    }
+
+    congl_data <- congl_data %>%
+      adjust_income_statement_data()
+
   }
 
   if (include_growthrate) {

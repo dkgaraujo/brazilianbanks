@@ -96,6 +96,59 @@ excess_capital <- function(dataframe, yyyymm_start, yyyymm_end) {
   return(dataframe)
 }
 
+#' Transforms income statement variables to reflect only quarterly performance
+#'
+#' @inheritParams growthrate
+#' @return A `tibble` with income statement variables reflecing only quarterly performance
+adjust_income_statement_data <- function(dataframe) {
+  # since the IF.data follows BR-GAAP accounting conventions that the income statement variables are cumulated every fiscal quarter, we need to "de-cumulate" them by subtracting Q1 and Q3 data from Q2 and Q4, respectively. This will yield a proper quarterly income statement, that in turn can be used later in trailing-window calculations, etc.
+  income_statement_cols <- all_data_info %>%
+    # 91, 94 and 98 are the income statement report codes and
+    # td == 3 filters out columns in these reports from the cadastro dataset
+    dplyr::filter(Report_column %in% c(91, 94, 98) & td == 3) %>%
+    dplyr::select(variable_name) %>%
+    unique() %>%
+    #dplyr::mutate(column_name = clean_col_names(column_name)) %>%
+    c() %>%
+    .[[1]]
+
+  dataframe <- dataframe %>%
+    dplyr::group_by(Financial_institution, lubridate::year(Quarter)) %>%
+    dplyr::mutate(
+      dplyr::across(
+        income_statement_cols,
+        .fns = list(income_statement_adj = ~ ifelse(lubridate::month(Quarter) %in% c(6, 12),
+                                                    .x - lag(.x, order_by = Quarter),
+                                                    .x)),
+        .names = "{col}_qtr"
+        )
+    ) %>%
+    dplyr::ungroup()
+    # dplyr::mutate(ROAE_qtr = ifelse(lubridate::month(Quarter) %in% c(6, 12),
+    #                          Net_Income - lag(Net_Income, order_by = Quarter),
+    #                          Net_Income) / Equity,
+    #        NII_OAE_qtr = ifelse(lubridate::month(Quarter) %in% c(6, 12),
+    #                             Income_Statement__Net_Interest_Income__Net_Interest_Income - lag(Income_Statement__Net_Interest_Income__Net_Interest_Income, order_by = Quarter),
+    #                             Income_Statement__Net_Interest_Income__Net_Interest_Income) / Equity,
+    #        OOI_OAE_qtr = ifelse(lubridate::month(Quarter) %in% c(6, 12), Income_Statement__Other_Operating_Income_and_Expenses__Other_Operating_Income_and_Expenses - lag(Income_Statement__Other_Operating_Income_and_Expenses__Other_Operating_Income_and_Expenses, order_by = Quarter),                                Income_Statement__Other_Operating_Income_and_Expenses__Other_Operating_Income_and_Expenses)  / Equity) %>%
+    # dplyr::ungroup() %>%
+    # dplyr::group_by(Financial_institution) %>%
+    # dplyr::mutate(ROAE = 100 * (ROAE_qtr +
+    #                             dplyr::lag(ROAE_qtr, n = 1, order_by = Quarter) +
+    #                             dplyr::lag(ROAE_qtr, n = 2, order_by = Quarter) +
+    #                             dplyr::lag(ROAE_qtr, n = 3, order_by = Quarter)),
+    #        NII_OAE = 100 * (NII_OAE_qtr +
+    #                         dplyr::lag(NII_OAE_qtr, n = 1, order_by = Quarter) +
+    #                         dplyr::lag(NII_OAE_qtr, n = 2, order_by = Quarter) +
+    #                         dplyr::lag(NII_OAE_qtr, n = 3, order_by = Quarter)),
+    #        OOI_OAE = 100 * (OOI_OAE_qtr +
+    #                         dplyr::lag(OOI_OAE_qtr, n = 1, order_by = Quarter) +
+    #                         dplyr::lag(OOI_OAE_qtr, n = 2, order_by = Quarter) +
+    #                         dplyr::lag(OOI_OAE_qtr, n = 3, order_by = Quarter))) %>%
+    # dplyr::ungroup()
+  return(dataframe)
+}
+
 #' Adds columns with quarter-on-quarter growth for numeric variables of each bank
 #'
 #' @param dataframe A `tibble` containing the bank-level information.
