@@ -17,8 +17,8 @@
 #' @param yyyymm_start Start calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
 #' @param yyyymm_end End calendar quarter for the time series. Accepted formats are: a six-digit integer representing YYYYMM, or a 'Date' class string. Use `NULL` for all available dates. For a list of available series, please use `list_dates`.
 #' @param banks_only TRUE. Whether only the observations related to banks should be kept.
-#' @param adjust_income_data TRUE. Whether income statement variables should be adjusted to reflect only developments within each quarter.
-#' @param include_growthrate TRUE. Whether the quarter-on-quarter growth rate for the numeric variables should be calculated.
+#' @param adjust_income_data TRUE. Whether income statement variables should be adjusted to reflect only developments within each quarter. Ignored if yyyymm_start == yyyymm_end.
+#' @param include_growthrate TRUE. Whether the quarter-on-quarter growth rate for the numeric variables should be calculated. Ignored if yyyymm_start == yyyymm_end.
 #' @param cache_json TRUE. Whether the JSON files with the raw data should be cached locally.
 #' @param verbose Whether the function must inform the user as it progresses.
 #' @return A `tibble` with the bank-level time series in a tidy format.
@@ -40,53 +40,29 @@ get_bank_stats <- function(
   }
 
   reports_info <- download_IFdata_reports(yyyymm_start, yyyymm_end, cache_json = cache_json)
-  quarters <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
+  qtrs <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
 
   # download all data for the selected quarters
-  cadastroData <- list()
-  infoData <- list()
-  dadosData <- list()
-  relatoriosData <- list()
-  for (qtr in quarters) {
-    if (verbose) {
-      print(paste("Preparing data for quarter", yyyymm_to_Date(qtr)))
-    }
-
-    # all the JSON files with data available for that particular quarter...
-    reports_qtr <- reports_info[[which(quarters == qtr)]]
-
-    # ... are now listed in a way as to find them from the BCB endpoint.
-    file_names <- Reduce(c, Reduce(c, lapply(reports_qtr$files, function(x) x['f'])))
-
-    for (file_name in file_names) {
-      if (grepl("/cadastro", file_name))
-        cadastroData[[file_name]] <- jsonlite::read_json(find_IFdata_json(file_name = file_name, cache_json = cache_json)) %>%
-          dplyr::bind_rows()
-
-      if (grepl("/info", file_name))
-        infoData[[file_name]] <- jsonlite::read_json(find_IFdata_json(file_name = file_name, cache_json = cache_json))
-
-      if (grepl("/dados", file_name))
-        dadosData[[file_name]] <- jsonlite::read_json(find_IFdata_json(file_name = file_name, cache_json = cache_json))
-
-      if (grepl("/trel", file_name))
-        relatoriosData[[file_name]] <- jsonlite::read_json(find_IFdata_json(file_name = file_name, cache_json = cache_json))
-    }
-  }
+  list_data <- downloads_qtr_data(qtrs = qtrs,
+                                  reports_info = reports_info,
+                                  cache_json = cache_json,
+                                  verbose = verbose)
 
   # stores some basic information about each IF.data report page
-  reports <- lapply(relatoriosData, function(x) list(id = as.character(x$id), Report_name = x$ni, ifd = x$ifd)) %>%
+  reports <- lapply(list_data$relatoriosData, function(x) list(id = as.character(x$id), Report_name = x$ni, ifd = x$ifd)) %>%
     dplyr::bind_rows(.id = "File")
 
+  income_statement_vars <- reports %>% dplyr::filter(stringr::str_detect(Report_name, "Income Statement"))
+
   # transform the data into more efficient / fluid formats to work with
-  names(cadastroData) <- names(cadastroData) %>% stringr::str_extract(pattern = "(?<=_)[^_]*(?=\\.)")
-  cadastroData <- cadastroData %>% dplyr::bind_rows(.id = "InstType")
+  names(list_data$cadastroData) <- names(list_data$cadastroData) %>% stringr::str_extract(pattern = "(?<=_)[^_]*(?=\\.)")
+  list_data$cadastroData <- list_data$cadastroData %>% dplyr::bind_rows(.id = "InstType")
 
-  names(infoData) <- names(infoData) %>% substr(start = 1, stop = 6)
-  infoData <- infoData %>% lapply(function(x) dplyr::bind_rows(x)) %>% dplyr::bind_rows(.id = "Quarter")
+  names(list_data$infoData) <- names(list_data$infoData) %>% substr(start = 1, stop = 6)
+  list_data$infoData <- list_data$infoData %>% lapply(function(x) dplyr::bind_rows(x)) %>% dplyr::bind_rows(.id = "Quarter")
 
-  names(dadosData) <- names(dadosData) %>% stringr::str_extract(pattern = "(?<=s)[^s]*(?=\\.)")
-  dadosData <- dadosData %>% lapply(function(x) x$values %>%
+  names(list_data$dadosData) <- names(list_data$dadosData) %>% stringr::str_extract(pattern = "(?<=s)[^s]*(?=\\.)")
+  list_data$dadosData <- list_data$dadosData %>% lapply(function(x) x$values %>%
     lapply(function(x) {
       df <- cbind(x$e, do.call(rbind.data.frame, x$v))
       colnames(df) <- c("FinInst", "info_id", "value")
@@ -95,33 +71,33 @@ get_bank_stats <- function(
     dplyr::bind_rows(.id = "QuarterType") %>%
     tidyr::separate(col = "QuarterType", into = c("Quarter", "DataRptType"), sep = "_")
 
-  names(relatoriosData) <- names(relatoriosData) %>% stringr::str_extract(pattern = "(?<=l)[^s]*(?=\\.)")
+  names(list_data$relatoriosData) <- names(list_data$relatoriosData) %>% stringr::str_extract(pattern = "(?<=l)[^s]*(?=\\.)")
 
   if (verbose) {
     print("Organising column information")
   }
 
-  cols_df <- lapply(relatoriosData, function(x)
+  cols_df <- lapply(list_data$relatoriosData, function(x)
     x$c %>% subcols() %>% lapply(dplyr::bind_rows) %>% dplyr::bind_rows()
    ) %>% dplyr::bind_rows(.id = "QuarterRpt") %>%
     tidyr::separate(col = "QuarterRpt", into = c("Quarter", "Report"), sep = "_") %>%
     dplyr::select(Quarter, Report, id, ifd, ip) %>%
     dplyr::mutate(ifd = as.integer(ifd),
                   ip = as.integer(ip)) %>%
-    dplyr::left_join(infoData, by = c("Quarter" = "Quarter", "ifd" = "id")) %>%
+    dplyr::left_join(list_data$infoData, by = c("Quarter" = "Quarter", "ifd" = "id")) %>%
     dplyr::rename(column_name = ni)
 
   # `parent_cols_df` represents the columns that are only "parent" columns of their subdivisions
   # these parent columns must be fetched from the data for their name, to couple with the subdivision
   # column names (otherwise there would be a lot of information with the same column name).
-  parent_cols_df <- lapply(relatoriosData, function(x) {
+  parent_cols_df <- lapply(list_data$relatoriosData, function(x) {
     xc <- x$c
     xc[which(xc %>% lapply(function(x) length(x$sc)) %>% Reduce(c, .) > 0)] %>%
       lapply(function(x) c("id" = x$id, "ifd" = x$ifd)) %>%
       dplyr::bind_rows()}) %>%
     dplyr::bind_rows(.id = "QuarterRpt") %>%
     tidyr::separate(col = "QuarterRpt", into = c("Quarter", "Report")) %>%
-    dplyr::left_join(infoData, by = c("Quarter" = "Quarter", "ifd" = "id")) %>%
+    dplyr::left_join(list_data$infoData, by = c("Quarter" = "Quarter", "ifd" = "id")) %>%
     dplyr::rename(parent_name = ni) %>%
     dplyr::select(-c(td, lid, ty))
 
@@ -140,9 +116,9 @@ get_bank_stats <- function(
     print("Merging data with column names")
   }
 
-  dados <- dadosData %>%
+  dados <- list_data$dadosData %>%
     tibble::as_tibble() %>%
-    dplyr::left_join(all_data_info %>% dplyr::select(Quarter, lid, variable_name) %>% dplyr::distinct(),
+    dplyr::left_join(all_data_info %>% dplyr::select(Quarter, td, lid, variable_name) %>% dplyr::distinct(),
                      by = c("Quarter" = "Quarter", "info_id" = "lid")) %>%
     dplyr::mutate(Quarter = yyyymm_to_Date(Quarter)) %>%
     dplyr::filter(info_id < 0 | info_id > 30)
@@ -168,7 +144,7 @@ get_bank_stats <- function(
                   column_name = clean_col_names(column_name)) %>%
     dplyr::arrange(lid)
 
-  cadastroLong <- cadastroData %>%
+  cadastroLong <- list_data$cadastroData %>%
     dplyr::mutate(FinInst = c0,
                   Quarter = yyyymm_to_Date(c1),
                   DataRptType = paste0(100, InstType)) %>%
@@ -180,21 +156,25 @@ get_bank_stats <- function(
   # but also in practice, it is hard to combine all IF.data information in a single instance for each bank
   # when conglomerates have more than one firm (which is totally natural, of course)
   cadastro <- cadastroLong %>%
-    dplyr::filter(complete.cases(.) & InstType == 1004) %>%
+    dplyr::filter(complete.cases(.) & InstType == min(InstType)) %>% # InstType == 1004 for prudential conglomerates
     dplyr::select(-cnames) %>%
     dplyr::distinct() %>%
     tidyr::pivot_wider(names_from = "column_name", values_from = "values") %>%
     dplyr::select(-c(Code, Date)) %>%
     dplyr::mutate(Branches = as.numeric(Branches),
                   Banking_Service_Outposts = as.numeric(Banking_Service_Outposts),
-                  Last_Change_of_Segment = yyyymm_to_Date(Last_Change_on_Segment),
                   Conglomerate = factor(Conglomerate),
                   Financial_Conglomerate = ifelse(Financial_Conglomerate == "" & TCB %in% c("b3C", "b3S"), FinInst, Financial_Conglomerate),
                   Prudential_Conglomerate = ifelse(Prudential_Conglomerate == "" & TCB %in% c("b3C", "b3S"), FinInst, Prudential_Conglomerate),
                   # this last correction below is needed because the identifier for this bank is not correctly placed in all quarters
                   Financial_Conglomerate = ifelse(Financial_Conglomerate == "" & FinInst == 1000080738, 51626, Financial_Conglomerate)) %>%
-    dplyr::select(-Last_Change_on_Segment) %>%
+    #dplyr::select(-Last_Change_on_Segment) %>%
     dplyr::filter(InstType != 1008) # this InstType 1008 only occurs in 2014-03-31
+
+  if ("Last_Change_on_Segment" %in% colnames(cadastro)) {
+    cadastro <- cadastro %>%
+      dplyr::mutate(Last_Change_of_Segment = yyyymm_to_Date(Last_Change_on_Segment))
+  }
 
   # congl_data <- cadastro %>%
   #   # first, at the prudential conglomerate level
@@ -218,8 +198,10 @@ get_bank_stats <- function(
     congl_data <- congl_data %>% dplyr::filter(TCB %in% c("b1", "b2"))
   }
 
-  congl_data <- congl_data %>%
-    excess_capital(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
+  if (yyyymm_start > 201400) {
+    congl_data <- congl_data %>%
+      excess_capital(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
+  }
 
   congl_data <- congl_data %>%
     dplyr::left_join(download_GDP_data(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end), by = "Quarter")
@@ -232,17 +214,15 @@ get_bank_stats <- function(
       dplyr::mutate(SizeByGDP = Total_Assets / AnnualGDP / 1000000)
   }
 
-  if (adjust_income_data) {
+  if (adjust_income_data & yyyymm_start != yyyymm_end) {
     if (verbose) {
       print("Adjusting income data to reflect only quarterly performance")
     }
-
     congl_data <- congl_data %>%
       adjust_income_statement_data()
-
   }
 
-  if (include_growthrate) {
+  if (include_growthrate & yyyymm_start != yyyymm_end) {
     if (verbose) {
       print("Calculating the growth rate for the numeric variables")
     }

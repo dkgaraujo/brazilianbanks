@@ -15,6 +15,46 @@ test_that("IF.data data are findable for a reasonable range of dates", {
   expect_equal(num_qtrs, num_qtrs_info)
 })
 
+test_that("the raw data is imported correctly", {
+  yyyymm_start <- 201403
+  yyyymm_end <- 201409
+  cache_json <- FALSE
+  verbose <- FALSE
+
+  reports_info <- brazilianbanks:::download_IFdata_reports(yyyymm_start, yyyymm_end, cache_json = cache_json)
+  qtrs <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
+
+  raw_data <- brazilianbanks:::downloads_qtr_data(qtrs = qtrs,
+                                                  reports_info = reports_info,
+                                                  cache_json = cache_json,
+                                                  verbose = verbose)
+
+  expect_equal(length(raw_data), 4)
+  expect_equal(names(raw_data), c("cadastroData", "infoData", "dadosData", "relatoriosData"))
+  expect_gte(length(raw_data[["cadastroData"]]), 1)
+  expect_gte(length(raw_data[["infoData"]]), 1)
+  expect_gte(length(raw_data[["dadosData"]]), 1)
+  expect_gte(length(raw_data[["relatoriosData"]]), 1)
+})
+
+test_that("there is at least one report with income stataement data", {
+  qtrs <- brazilianbanks::all_available_quarters()
+  yyyymm_start <- yyyymm_end <- sample(qtrs, 1)
+
+  raw_data <- brazilianbanks:::downloads_qtr_data(qtrs = qtrs,
+                                                  reports_info = reports_info,
+                                                  cache_json = cache_json,
+                                                  verbose = verbose)
+
+  reports <- lapply(raw_data$relatoriosData, function(x) list(id = as.character(x$id), Report_name = x$ni, ifd = x$ifd)) %>%
+    dplyr::bind_rows(.id = "File")
+
+  income_statement_vars <- reports %>% dplyr::filter(stringr::str_detect(Report_name, "Income Statement"))
+
+  expect_gte(nrow(income_statement_vars), 1)
+  expect_equal(ncol(income_statement_vars), 4)
+})
+
 test_that("the Brazilian GDP data is properly downloaded from IBGE", {
   yyyymm_start <- 201403
   yyyymm_end <- 202109

@@ -12,6 +12,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#' Downloads the raw data from the report files
+#'
+#' @param qtrs The quarter or quarters of interest
+#' @param reports_info List with the reports available for the period between the desired quarters
+#' @inheritParams get_bank_stats
+#' @return List with raw data from IF.Data files organised according to type of data
+downloads_qtr_data <- function(qtrs, reports_info, cache_json, verbose) {
+  cadastroData <- list()
+  infoData <- list()
+  dadosData <- list()
+  relatoriosData <- list()
+  for (qtr in qtrs) {
+    if (verbose) {
+      print(paste("Preparing data for quarter", yyyymm_to_Date(qtr)))
+    }
+
+    # all the JSON files with data available for that particular quarter...
+    reports_qtr <- reports_info[[which(qtrs == qtr)]]
+
+    # ... are now listed in a way as to find them from the BCB endpoint.
+    file_names <- Reduce(c, Reduce(c, lapply(reports_qtr$files, function(x) x['f'])))
+
+    for (file_name in file_names) {
+      if (grepl("/cadastro", file_name))
+        cadastroData[[file_name]] <- jsonlite::read_json(find_IFdata_json(file_name = file_name, cache_json = cache_json)) %>%
+          dplyr::bind_rows()
+
+      if (grepl("/info", file_name))
+        infoData[[file_name]] <- jsonlite::read_json(find_IFdata_json(file_name = file_name, cache_json = cache_json))
+
+      if (grepl("/dados", file_name))
+        dadosData[[file_name]] <- jsonlite::read_json(find_IFdata_json(file_name = file_name, cache_json = cache_json))
+
+      if (grepl("/trel", file_name))
+        relatoriosData[[file_name]] <- jsonlite::read_json(find_IFdata_json(file_name = file_name, cache_json = cache_json))
+    }
+  }
+
+  return(list(
+    "cadastroData" = cadastroData,
+    "infoData" = infoData,
+    "dadosData" = dadosData,
+    "relatoriosData" = relatoriosData
+  ))
+}
+
+
 #' Downloads information about the IF.Data reports in the selected dates or up to the last available date if `yyyymm_end` is `NULL`
 #'
 #' @inheritParams get_bank_stats
@@ -102,10 +149,10 @@ excess_capital <- function(dataframe, yyyymm_start, yyyymm_end) {
 #' @return A `tibble` with income statement variables reflecing only quarterly performance
 adjust_income_statement_data <- function(dataframe) {
   # since the IF.data follows BR-GAAP accounting conventions that the income statement variables are cumulated every fiscal quarter, we need to "de-cumulate" them by subtracting Q1 and Q3 data from Q2 and Q4, respectively. This will yield a proper quarterly income statement, that in turn can be used later in trailing-window calculations, etc.
-  income_statement_cols <- dataframe %>%
+  income_statement_cols <- all_data_info %>%
     # 91, 94 and 98 are the income statement report codes and
     # td == 3 filters out columns in these reports from the cadastro dataset
-    dplyr::filter(Report_column %in% c(91, 94, 98) & td == 3) %>%
+    dplyr::filter(Report_column %in% c(5, 79, 91, 94, 98) & td == 3) %>%
     dplyr::select(variable_name) %>%
     unique() %>%
     #dplyr::mutate(column_name = clean_col_names(column_name)) %>%
@@ -116,7 +163,7 @@ adjust_income_statement_data <- function(dataframe) {
     dplyr::group_by(Financial_institution, lubridate::year(Quarter)) %>%
     dplyr::mutate(
       dplyr::across(
-        income_statement_cols,
+        tidyselect::all_of(income_statement_cols),
         .fns = list(income_statement_adj = ~ ifelse(lubridate::month(Quarter) %in% c(6, 12),
                                                     .x - lag(.x, order_by = Quarter),
                                                     .x)),
