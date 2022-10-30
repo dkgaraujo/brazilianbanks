@@ -37,9 +37,14 @@ test_that("the raw data is imported correctly", {
   expect_gte(length(raw_data[["relatoriosData"]]), 1)
 })
 
-test_that("there is at least one report with income stataement data", {
+test_that("there is at least one report with income statement data", {
   qtrs <- brazilianbanks::all_available_quarters()
   yyyymm_start <- yyyymm_end <- sample(qtrs, 1)
+  cache_json <- FALSE
+  verbose <- FALSE
+
+  reports_info <- brazilianbanks:::download_IFdata_reports(yyyymm_start, yyyymm_end, cache_json = cache_json)
+  qtrs <- all_quarters_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
 
   raw_data <- brazilianbanks:::downloads_qtr_data(qtrs = qtrs,
                                                   reports_info = reports_info,

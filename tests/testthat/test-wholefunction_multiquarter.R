@@ -14,6 +14,8 @@ test_that("the main function works as a whole for a multi-quarter period without
     include_growthrate = FALSE,
     cache_json = FALSE,
     verbose = FALSE)
+
+  expect_gte(nrow(dataset), 50) # there are definitely more than 50 banks
 })
 
 test_that("the main function works as a whole for a multi-quarter period with the income data adjustment turned on", {
@@ -95,4 +97,6 @@ test_that("the main function works as a whole for a multi-quarter period with al
     include_growthrate = TRUE,
     cache_json = FALSE,
     verbose = FALSE)
+
+  expect_gte(nrow(dataset), 50) # there are definitely more than 50 banks
 })

@@ -219,14 +219,13 @@ get_bank_stats <- function(
       print("Adjusting income data to reflect only quarterly performance")
     }
     congl_data <- congl_data %>%
-      adjust_income_statement_data()
+      adjust_income_statement_data(all_data_info = all_data_info)
   }
 
   if (include_growthrate & yyyymm_start != yyyymm_end) {
     if (verbose) {
       print("Calculating the growth rate for the numeric variables")
     }
-
     congl_data <- congl_data %>%
       growthrate()
   }

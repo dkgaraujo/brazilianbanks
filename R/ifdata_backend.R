@@ -147,7 +147,7 @@ excess_capital <- function(dataframe, yyyymm_start, yyyymm_end) {
 #'
 #' @inheritParams growthrate
 #' @return A `tibble` with income statement variables reflecing only quarterly performance
-adjust_income_statement_data <- function(dataframe) {
+adjust_income_statement_data <- function(dataframe, all_data_info) {
   # since the IF.data follows BR-GAAP accounting conventions that the income statement variables are cumulated every fiscal quarter, we need to "de-cumulate" them by subtracting Q1 and Q3 data from Q2 and Q4, respectively. This will yield a proper quarterly income statement, that in turn can be used later in trailing-window calculations, etc.
   income_statement_cols <- all_data_info %>%
     # 91, 94 and 98 are the income statement report codes and
