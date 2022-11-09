@@ -233,6 +233,8 @@ get_bank_stats <- function(
   if (verbose) {
     print("`get_bank_stats` is completed!")
   }
+
+  congl_data <- dplyr::ungroup(congl_data)
   return(congl_data)
 }
 

@@ -25,7 +25,7 @@ downloads_qtr_data <- function(qtrs, reports_info, cache_json, verbose) {
   relatoriosData <- list()
   for (qtr in qtrs) {
     if (verbose) {
-      print(paste("Preparing data for quarter", yyyymm_to_Date(qtr)))
+      print(paste("Preparing data for the quarter", yyyymm_to_Date(qtr)))
     }
 
     # all the JSON files with data available for that particular quarter...
