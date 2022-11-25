@@ -76,6 +76,15 @@ all_quarters_between <- function(yyyymm_start = 201703, yyyymm_end = 202109) {
   return(quarters)
 }
 
+#' Lists all months between the starting and the end quarter
+#'
+#' @inheritParams get_bank_stats
+all_months_between <- function(yyyymm_start = 201703, yyyymm_end = 202109) {
+  months <- yyyymm_start:yyyymm_end
+  months <- months[substr(as.character(months), 5, 6) %in% c(paste0("0", 1:9), "10", "11", "12")]
+  return(months)
+}
+
 yyyymm_to_Date <- function(yyyymm, end_of_month = TRUE) {
   newDate <- as.Date(paste0(yyyymm, "01"), format = "%Y%m%d")
   if (end_of_month)

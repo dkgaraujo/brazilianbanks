@@ -247,3 +247,37 @@ all_available_quarters <- function(cache_json = TRUE) {
   json_data <- download_IFdata_reports_info(cache_json = cache_json)
   return(Reduce(c, lapply(json_data, function (x) x$dt)))
 }
+
+
+#' Retrieves municipality-level statistics for each bank
+#' @inheritParams get_bank_stats
+#' @export
+get_municipal_stats <- function(
+    yyyymm_start, yyyymm_end,
+    verbose = TRUE
+) {
+  months <- all_months_between(yyyymm_start = yyyymm_start, yyyymm_end = yyyymm_end)
+  estban <- list()
+
+  dir <- paste0(tempdir(), "/")
+
+  for (yyyymm in months) {
+    if (verbose) {
+      print(paste("Downloading ESTBAN data for", yyyymm))
+    }
+
+    estban_url <- paste0("https://www4.bcb.gov.br/fis/cosif/cont/estban/municipio/", yyyymm, "_ESTBAN.ZIP")
+    filename_zip <- paste0(dir, yyyymm, "_ESTBAN.ZIP")
+    filename_csv <- stringr::str_replace(filename_zip, ".ZIP", ".CSV")
+    if (!file.exists(filename_csv)) {
+      if (!file.exists(filename_zip)) {
+        curl::curl_download(estban_url, destfile = filename_zip)
+      }
+      unzip(zipfile = filename_zip, exdir = dir)
+    }
+    estban[[as.character(yyyymm)]] <- read.csv2(filename, skip = 2)
+  }
+
+  estban <- dplyr::bind_rows(estban, .id = "month")
+  return(estban)
+}
