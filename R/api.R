@@ -275,7 +275,7 @@ get_municipal_stats <- function(
       }
       unzip(zipfile = filename_zip, exdir = dir)
     }
-    estban[[as.character(yyyymm)]] <- read.csv2(filename, skip = 2)
+    estban[[as.character(yyyymm)]] <- read.csv2(filename_csv, skip = 2)
   }
 
   estban <- dplyr::bind_rows(estban, .id = "month")
