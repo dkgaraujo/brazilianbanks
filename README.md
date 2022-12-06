@@ -18,7 +18,7 @@ devtools::install_github("dkgaraujo/brazilianbanks")
 ## Usage
 The function `all_available_quarters()` returns a vector with all the quarters for which there is available data. I suggest you run this function first, in particular to check what the most recent quarter is.
 
-The main function is `get_bank_stats()`. It returns a tibble data frame with the panel data:
+If you are interested in bank-level variables (eg, accounting or credit risk figures), the main function is `get_bank_stats()`. It returns a tibble data frame with the panel data:
 
 ```
 library(brazilianbanks)
@@ -28,6 +28,14 @@ bank_df <- get_bank_stats(yyyymm_start = 201903, yyyymm_end = max(quarters))
 ```
 
 The initial and final quarters (arguments `yyyymm_start` and `yyyymm_end` respectively) are defined by the user according to the YYYYMM format, ie March 2014 is 201403. Note that the code chunk above uses the most recent available quarter as the final quarter for data download.
+
+If your focus is on municipality-level banking statistics, the main function is `get_municipal_stats()`. It returns a tibble data frame with bank balance sheet and financial statement variables at the municipal level, at a monthly frequency:
+
+```
+library(brazilianbanks)
+
+municipal_banking_data <- get_municipal_stats(yyyymm_start = 201111, yyyymm_end = 201808)
+```
 
 ## Definitions
 The result of `get_bank_stats()` represents only data at the consolidated levels, equivalent to "bank holding company" level in other jurisdictions. Brazilian regulation differentiates between "prudential" and "financial" conglomerate consolidation perspectives; both are considered to be the same bank.
