@@ -29,6 +29,8 @@ bank_df <- get_bank_stats(yyyymm_start = 201903, yyyymm_end = max(quarters))
 
 The initial and final quarters (arguments `yyyymm_start` and `yyyymm_end` respectively) are defined by the user according to the YYYYMM format, ie March 2014 is 201403. Note that the code chunk above uses the most recent available quarter as the final quarter for data download.
 
+> Note that the `brazilianbanks` package already embeds a dataset variable of banks and other financial institutions' accounting, risk and other information for the period of 2017 Q1 to 2021 Q4: `brazilian_banks_201703_202112`. If you are looking to get familiar with the dataset and the time frame of this variable is suitable for you, using it is a quicker alternative to `get_bank_stats()`.
+
 If your focus is on municipality-level banking statistics, the main function is `get_municipal_stats()`. It returns a tibble data frame with bank balance sheet and financial statement variables at the municipal level, at a monthly frequency:
 
 ```

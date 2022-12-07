@@ -1,7 +1,7 @@
 Package: brazilianbanks
 Type: Package
 Title: Data on Brazilian banks and other regulated financial institutions
-Version: 0.0.2
+Version: 0.0.3
 Author: Douglas Kiarelly Godoy de Araujo
 Maintainer: Douglas Kiarelly Godoy de Araujo <dkg.araujo@gmail.com>
 Description: A user-friendly interface to official datasets of bank-level variables

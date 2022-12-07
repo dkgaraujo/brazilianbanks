@@ -6,3 +6,4 @@ cache_json
 .github
 R/pillar3_backend.R
 ^codecov\.yml$
+^data-raw$
