@@ -160,12 +160,14 @@ adjust_income_statement_data <- function(dataframe, all_data_info) {
     .[[1]]
 
   dataframe <- dataframe %>%
-    dplyr::group_by(Financial_institution, lubridate::year(Quarter)) %>%
+    dplyr::mutate(Year = lubridate::year(Quarter),
+                  Month = lubridate::month(Quarter)) |>
+    dplyr::group_by(Financial_institution, Year) %>%
     dplyr::mutate(
       dplyr::across(
         tidyselect::all_of(income_statement_cols),
-        .fns = list(income_statement_adj = ~ ifelse(lubridate::month(Quarter) %in% c(6, 12),
-                                                    .x - lag(.x, order_by = Quarter),
+        .fns = list(income_statement_adj = ~ ifelse(Month %in% c(6, 12),
+                                                    .x - dplyr::lag(.x, order_by = Quarter),
                                                     .x)),
         .names = "{col}_qtr"
         )
