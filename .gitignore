@@ -9,3 +9,4 @@ nbs
 inst/doc
 *.csv
 *.RDS
+vignettes/articles/cache_json

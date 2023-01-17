@@ -7,3 +7,4 @@ cache_json
 R/pillar3_backend.R
 ^codecov\.yml$
 ^data-raw$
+^vignettes/articles$
