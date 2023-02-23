@@ -4,7 +4,7 @@ authors:
 - family-names: "Araujo"
   given-names: "Douglas"
   orcid: "https://orcid.org/0000-0001-8070-6828"
-title: "brazilianbanks: Retrieving data on Brazilian banks and other regulated institutions with R"
+title: "brazilianbanks: Retrieving data on Brazilian banks and other regulated financial institutions with R"
 version: 0.0.4
 date-released: 2023-01-17
 url: "https://github.com/dkgaraujo/brazilianbanks"
