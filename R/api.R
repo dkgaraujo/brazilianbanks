@@ -116,9 +116,31 @@ get_bank_stats <- function(
     print("Merging data with column names")
   }
 
+  # At this stage, some column codes have two names: one with
+  # just the column and the other also including the parent
+  # category. The code below retains only one of them.
+  data_info_for_matching <- all_data_info %>%
+    dplyr::select(Quarter, td, lid, variable_name) %>%
+    # Before cleaning duplicates, change the names of some columns
+    # due to typos or seemingly wrongfully named columns in the original data
+    dplyr::mutate(variable_name = ifelse(variable_name == "Fixed_Asset_Ratio",
+                                         "Fixed_Assets_Ratio",
+                                         variable_name)) %>%
+    dplyr::mutate(variable_name = ifelse(variable_name == "Regulatory_Capital_Ratio",
+                                         "Total_Capital_Ratio",
+                                         variable_name)) %>%
+    dplyr::distinct() %>%
+    dplyr::group_by(Quarter, lid) %>%
+    dplyr::filter(if(dplyr::n() > 1) {
+      !grepl("__", variable_name)
+    } else {
+      TRUE
+    }) %>%
+    dplyr::ungroup()
+
   dados <- list_data$dadosData %>%
     tibble::as_tibble() %>%
-    dplyr::left_join(all_data_info %>% dplyr::select(Quarter, td, lid, variable_name) %>% dplyr::distinct(),
+    dplyr::left_join(data_info_for_matching,
                      by = c("Quarter" = "Quarter", "info_id" = "lid")) %>%
     dplyr::mutate(Quarter = yyyymm_to_Date(Quarter)) %>%
     dplyr::filter(info_id < 0 | info_id > 30)
