@@ -105,7 +105,7 @@ get_bank_stats <- function(
     dplyr::left_join(parent_cols_df,
                      by = c("Quarter" = "Quarter", "ip" = "id"),
                      suffix = c("_column", "_parent")) %>%
-    dplyr::left_join(reports %>% dplyr::select(id, Report_name) %>% unique(),
+    dplyr::left_join(reports %>% dplyr::select(id, Report_name) %>% dplyr::distinct(),
                      by = c("Report_column" = "id")) %>%
     dplyr::mutate(variable_name = ifelse(is.na(parent_name),
                                          column_name,
