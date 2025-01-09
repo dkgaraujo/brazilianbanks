@@ -276,9 +276,11 @@ all_available_quarters <- function(cache_json = TRUE) {
 }
 
 
+# Removing the function `get_municipal_stats` from the API
+# since the URL with the data no longer seems to work
+
 #' Retrieves municipality-level statistics for each bank
 #' @inheritParams get_bank_stats
-#' @export
 get_municipal_stats <- function(
     yyyymm_start, yyyymm_end,
     verbose = TRUE
