@@ -126,8 +126,8 @@ get_bank_stats <- function(
     dplyr::mutate(variable_name = ifelse(variable_name == "Fixed_Asset_Ratio",
                                          "Fixed_Assets_Ratio",
                                          variable_name)) %>%
-    dplyr::mutate(variable_name = ifelse(variable_name == "Regulatory_Capital_Ratio",
-                                         "Total_Capital_Ratio",
+    dplyr::mutate(variable_name = ifelse(variable_name == "Total_Capital_Ratio",
+                                         "Regulatory_Capital_Ratio",
                                          variable_name)) %>%
     dplyr::distinct() %>%
     dplyr::group_by(Quarter, lid) %>%
