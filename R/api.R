@@ -180,12 +180,17 @@ get_bank_stats <- function(
   cadastro <- cadastroLong %>%
     dplyr::filter(complete.cases(.) & InstType == min(InstType)) %>% # InstType == 1004 for prudential conglomerates
     dplyr::select(-cnames) %>%
+    # The column name "Financial Conglomerate" actual harbours both the code and the name
+    # The `mutate` operation next separates those two information bits into separate columns
+    dplyr::mutate(column_name = ifelse(column_name == "Financial_Conglomerate" & !grepl("^\\d+$", values),
+                                       "Financial_Conglomerate_Name",
+                                       column_name)) %>%
     dplyr::distinct() %>%
     tidyr::pivot_wider(names_from = "column_name", values_from = "values") %>%
     dplyr::select(-c(Code, Date)) %>%
     dplyr::mutate(Branches = as.numeric(Branches),
                   Banking_Service_Outposts = as.numeric(Banking_Service_Outposts),
-                  Conglomerate = factor(Conglomerate),
+                  #Conglomerate = factor(Conglomerate),
                   Financial_Conglomerate = ifelse(Financial_Conglomerate == "" & TCB %in% c("b3C", "b3S"), FinInst, Financial_Conglomerate),
                   Prudential_Conglomerate = ifelse(Prudential_Conglomerate == "" & TCB %in% c("b3C", "b3S"), FinInst, Prudential_Conglomerate),
                   # this last correction below is needed because the identifier for this bank is not correctly placed in all quarters
